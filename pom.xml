@@ -26,7 +26,7 @@
         <module>yudao-module-crm</module>
         <!-- 友情提示：基于 Spring AI 实现 LLM 大模型的接入，需要使用 JDK17 版本，详细可见 https://doc.iocoder.cn/ai/build/ -->
 <!--        <module>yudao-module-ai</module>-->
-        <module>yudao-module-iot</module>
+<!--        <module>yudao-module-iot</module>-->
     </modules>
 
     <name>${project.artifactId}</name>
@@ -34,7 +34,7 @@
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>
 
     <properties>
-        <revision>2025.09-jdk8-SNAPSHOT</revision>
+        <revision>1.0.0-SNAPSHOT</revision>
         <!-- Maven 相关 -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -150,5 +150,15 @@
             <url>https://maven.aliyun.com/repository/public</url>
         </repository>
     </repositories>
+
+    <!-- 统一配置发布仓库 -->
+    <distributionManagement>
+        <repository>
+            <!-- 须与 settings.xml 中 server 的 id 一致 -->
+            <id>shiteng-dev-java-springboot-jar-maven</id>
+            <name>shiteng-dev-java-springboot-jar-maven</name>
+            <url>https://maven.cnb.cool/shiteng-dev/java-springboot-jar-maven/-/packages/</url>
+        </repository>
+    </distributionManagement>
 
 </project>
