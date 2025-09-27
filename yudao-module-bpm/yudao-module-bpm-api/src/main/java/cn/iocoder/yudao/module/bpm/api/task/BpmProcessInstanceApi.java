@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.bpm.api.task;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
+import cn.iocoder.yudao.module.bpm.api.task.dto.BpmTaskDTO;
 import cn.iocoder.yudao.module.bpm.enums.ApiConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @FeignClient(name = ApiConstants.NAME) // TODO 芋艿：fallbackFactory =
 @Tag(name = "RPC 服务 - 流程实例")
@@ -25,4 +27,14 @@ public interface BpmProcessInstanceApi {
     CommonResult<String> createProcessInstance(@RequestParam("userId") Long userId,
                                                @Valid @RequestBody BpmProcessInstanceCreateReqDTO reqDTO);
 
+
+    /**
+     * 根据流程ID查询任务详情
+     *
+     * @param processInstanceId
+     * @return
+     */
+    @PostMapping(PREFIX + "/get-task-info")
+    @Operation(summary = "根据流程ID查询任务详情")
+    List<BpmTaskDTO> getProcessTaskInfo(@RequestParam("processInstanceId") String processInstanceId);
 }

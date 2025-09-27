@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.dm.dal.mysql.order.OzonOrderMapper">
+
+    <!--
+        一般情况下，尽可能使用 Mapper 进行 CRUD 增删改查即可。
+        无法满足的场景，例如说多表关联查询，才使用 XML 编写 SQL。
+        代码生成器暂时只生成 Mapper XML 文件本身，更多推荐 MybatisX 快速开发插件来生成查询。
+        文档可见：https://www.iocoder.cn/MyBatis/x-plugins/
+     -->
+
+    <!-- 定义列的 SQL 片段 -->
+    <sql id="orderColumns">
+        id, client_id, order_id, posting_number, parent_posting_number, order_number,
+    status, in_process_at, shipment_date, delivering_date, accruals_for_sale,
+    cancellation, products, delivery_method, substatus, barcode, order_type,
+    tenant_id, create_time, update_time, creator, updater, deleted
+    </sql>
+
+    <select id="selectPage2" resultType="cn.iocoder.yudao.module.dm.dal.dataobject.order.OzonOrderDO">
+        SELECT
+        <include refid="orderColumns"/>
+        FROM dm_ozon_order o
+        WHERE o.deleted = 0
+
+        <!-- 动态主表条件 -->
+        <if test="reqVO.clientIds != null and reqVO.clientIds.length > 0">
+            AND o.client_id IN
+            <foreach item="clientId" collection="reqVO.clientIds" open="(" separator="," close=")">
+                #{clientId}
+            </foreach>
+        </if>
+        <if test="reqVO.orderType != null">
+            AND o.order_type = #{reqVO.orderType}
+        </if>
+        <if test="reqVO.orderId != null">
+            AND o.order_id = #{reqVO.orderId}
+        </if>
+        <if test="reqVO.postingNumber != null and reqVO.postingNumber != ''">
+            AND o.posting_number LIKE CONCAT('%', #{reqVO.postingNumber}, '%')
+        </if>
+        <if test="reqVO.status != null">
+            AND o.status = #{reqVO.status}
+        </if>
+        <if test="reqVO.inProcessAtParams != null and reqVO.inProcessAtParams.length == 2">
+            AND o.in_process_at BETWEEN #{reqVO.inProcessAtParams[0]} AND #{reqVO.inProcessAtParams[1]}
+        </if>
+        <if test="reqVO.shipmentDateParams != null and reqVO.shipmentDateParams.length == 2">
+            AND o.shipment_date BETWEEN #{reqVO.shipmentDateParams[0]} AND #{reqVO.shipmentDateParams[1]}
+        </if>
+        <if test="reqVO.createTime != null and reqVO.createTime.length == 2">
+            AND o.create_time BETWEEN #{reqVO.createTime[0]} AND #{reqVO.createTime[1]}
+        </if>
+
+        <!-- 动态子表条件，使用子查询 -->
+        <if test="reqVO.offerId != null and reqVO.offerId != ''">
+            AND o.posting_number IN (
+            SELECT i.posting_number
+            FROM dm_ozon_order_item i
+            WHERE 1=1
+            <if test="reqVO.offerId != null and reqVO.offerId != ''">
+                AND i.offer_id LIKE CONCAT('%', #{reqVO.offerId}, '%')
+            </if>
+            )
+        </if>
+
+        ORDER BY o.in_process_at DESC
+    </select>
+
+
+    <select id="selectVoByTimeBetween"
+            resultType="cn.iocoder.yudao.module.dm.controller.admin.statistics.vo.TradeTrendSummaryRespVO">
+        SELECT
+            COUNT(1)                                       AS totalOrders,
+            SUM(accruals_for_sale)                         AS totalSales
+        FROM dm_ozon_order
+        WHERE in_process_at BETWEEN #{beginTime} AND #{endTime}
+          AND deleted = FALSE
+          AND client_id IN
+        <foreach item="item" index="index" collection="clientIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="selectMonthSalesStats" resultType="cn.iocoder.yudao.module.dm.dal.dataobject.order.OzonOrderSalesStatsDO">
+        SELECT 
+            DATE_FORMAT(o.in_process_at, '%Y-%m') as month,
+            i.offer_id as offerId,
+            SUM(i.quantity) as salesQuantity
+        FROM dm_ozon_order o
+        JOIN dm_ozon_order_item i ON o.order_id = i.order_id
+        WHERE o.deleted = 0 AND i.deleted = 0
+        AND DATE_FORMAT(o.in_process_at, '%Y-%m') = #{month}
+        <if test="clientIds != null and clientIds.length > 0">
+            AND o.client_id IN
+            <foreach collection="clientIds" item="clientId" open="(" separator="," close=")">
+                #{clientId}
+            </foreach>
+        </if>
+        <if test="offerId != null">
+            AND i.offer_id = #{offerId}
+        </if>
+        GROUP BY DATE_FORMAT(o.in_process_at, '%Y-%m'), i.offer_id
+    </select>
+
+    <select id="selectHistorySalesStats" resultType="cn.iocoder.yudao.module.dm.dal.dataobject.order.OzonOrderSalesStatsDO">
+        SELECT 
+            DATE_FORMAT(o.in_process_at, '%Y-%m') as month,
+            i.offer_id as offerId,
+            SUM(i.quantity) as salesQuantity
+        FROM dm_ozon_order o
+        JOIN dm_ozon_order_item i ON o.order_id = i.order_id
+        WHERE o.deleted = 0 AND i.deleted = 0
+        AND DATE_FORMAT(o.in_process_at, '%Y-%m') &lt; #{month}
+        <if test="clientIds != null and clientIds.length > 0">
+            AND o.client_id IN
+            <foreach collection="clientIds" item="clientId" open="(" separator="," close=")">
+                #{clientId}
+            </foreach>
+        </if>
+        <if test="offerId != null">
+            AND i.offer_id = #{offerId}
+        </if>
+        GROUP BY DATE_FORMAT(o.in_process_at, '%Y-%m'), i.offer_id
+    </select>
+</mapper>

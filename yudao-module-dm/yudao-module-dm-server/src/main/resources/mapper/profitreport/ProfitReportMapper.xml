@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.dm.dal.mysql.profitreport.ProfitReportMapper">
+
+    <!--
+        重要性能优化建议：
+        为了提升查询性能，建议在dm_profit_report表上创建以下复合索引：
+        
+        1. 客户端维度查询索引：
+        CREATE INDEX idx_profit_client_date ON dm_profit_report(client_id, finance_date);
+        
+        2. SKU维度查询索引：
+        CREATE INDEX idx_profit_sku_date ON dm_profit_report(client_id, finance_date, product_id, offer_id);
+        
+        3. 通用查询优化索引：
+        CREATE INDEX idx_profit_date_client ON dm_profit_report(finance_date, client_id);
+        
+        这些索引可以大幅提升GROUP BY和ORDER BY操作的性能，预计可将查询时间从22秒优化到3秒以内。
+    -->
+
+    <!--
+        一般情况下，尽可能使用 Mapper 进行 CRUD 增删改查即可。
+        无法满足的场景，例如说多表关联查询，才使用 XML 编写 SQL。
+        代码生成器暂时只生成 Mapper XML 文件本身，更多推荐 MybatisX 快速开发插件来生成查询。
+        文档可见：https://www.iocoder.cn/MyBatis/x-plugins/
+     -->
+
+    <select id="selectClientPage" resultType="cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.ProfitReportRespVO">
+        SELECT
+        <!-- 选择分组维度 -->
+        <choose>
+            <when test="reqVO.groupType == 'day'">
+                DATE(finance_date) AS finance_date,
+            </when>
+            <when test="reqVO.groupType == 'week'">
+                YEARWEEK(finance_date, 1) AS finance_date,
+            </when>
+            <when test="reqVO.groupType == 'month'">
+                DATE_FORMAT(finance_date, '%Y-%m') AS finance_date,
+            </when>
+            <otherwise>
+                DATE(finance_date) AS finance_date,  <!-- 默认按天分组 -->
+            </otherwise>
+        </choose>
+        client_id,
+        SUM(orders) AS orders,
+        SUM(sales_volume) AS sales_volume,
+        SUM(sales_amount) AS sales_amount,
+        SUM(logistics_shipping_cost) AS logistics_shipping_cost,
+        SUM(category_commission_cost) AS category_commission_cost,
+        SUM(order_fee_cost) AS order_fee_cost,
+        SUM(logistics_last_mile_cost) AS logistics_last_mile_cost,
+        SUM(logistics_transfer_cost) AS logistics_transfer_cost,
+        SUM(return_commission_amount) AS return_commission_amount,
+        SUM(cancelled_amount) AS cancelled_amount,
+        SUM(reverse_logistics_cost) AS reverse_logistics_cost,
+        SUM(logistics_drop_off) AS logistics_drop_off,
+        SUM(refund_orders) AS refund_orders,
+        SUM(refund_amount) AS refund_amount,
+        SUM(platform_service_cost) AS platform_service_cost,
+        SUM(fbo_deliver_cost) AS fbo_deliver_cost,
+        SUM(fbo_inspection_cost) AS fbo_inspection_cost,
+        SUM(fbs_check_in_cost) AS fbs_check_in_cost,
+        SUM(fbs_operating_cost) AS fbs_operating_cost,
+        SUM(fbs_other_cost) AS fbs_other_cost,
+        SUM(sales_vat_cost) AS sales_vat_cost,
+        SUM(vat_cost) AS vat_cost,
+        SUM(customs_cost) AS customs_cost,
+        SUM(purchase_cost) AS purchase_cost,
+        SUM(purchase_shipping_cost) AS purchase_shipping_cost,
+        SUM(declared_value_cost) AS declared_value_cost,
+        SUM(other_agent_service_cost) as other_agent_service_cost,
+        MAX(platform_currency) AS platform_currency,
+        MAX(fbs_currency) AS fbs_currency,
+        MAX(purchase_currency) AS purchase_currency,
+        MAX(logistics_currency) AS logistics_currency,
+        MAX(customs_currency) AS customs_currency
+        FROM dm_profit_report
+        WHERE 1=1
+        <!-- 使用 clientIds 数组进行 IN 查询 -->
+        <if test="reqVO.clientIds != null">
+            AND client_id IN
+            <foreach collection="reqVO.clientIds" item="clientId" open="(" separator="," close=")">
+                #{clientId}
+            </foreach>
+        </if>
+        <!-- 使用 financeDate 范围进行查询 -->
+        <if test="reqVO.financeDate != null">
+            AND finance_date BETWEEN #{reqVO.financeDate[0]} AND #{reqVO.financeDate[1]}
+        </if>
+        <!-- 动态分组 -->
+        <choose>
+            <when test="reqVO.groupType == 'day'">
+                GROUP BY DATE(finance_date), client_id
+            </when>
+            <when test="reqVO.groupType == 'week'">
+                GROUP BY YEARWEEK(finance_date, 1), client_id
+            </when>
+            <when test="reqVO.groupType == 'month'">
+                GROUP BY DATE_FORMAT(finance_date, '%Y-%m'), client_id
+            </when>
+            <otherwise>
+                GROUP BY DATE(finance_date), client_id  <!-- 默认按天分组 -->
+            </otherwise>
+        </choose>
+        ORDER BY finance_date DESC
+    </select>
+
+    <select id="selectSkuPage" resultType="cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.ProfitReportRespVO">
+        SELECT
+        <!-- 选择分组维度 -->
+        <choose>
+            <when test="reqVO.groupType == 'day'">
+                DATE(finance_date) AS finance_date,
+            </when>
+            <when test="reqVO.groupType == 'week'">
+                YEARWEEK(finance_date, 1) AS finance_date,
+            </when>
+            <when test="reqVO.groupType == 'month'">
+                DATE_FORMAT(finance_date, '%Y-%m') AS finance_date,
+            </when>
+            <otherwise>
+                DATE(finance_date) AS finance_date,  <!-- 默认按天分组 -->
+            </otherwise>
+        </choose>
+        client_id,
+        product_id,
+        offer_id,
+        SUM(orders) AS orders,
+        SUM(sales_volume) AS sales_volume,
+        SUM(sales_amount) AS sales_amount,
+        SUM(settle_amount) AS settle_amount,
+        SUM(refund_settle_amount) AS refund_settle_amount,
+        SUM(logistics_shipping_cost) AS logistics_shipping_cost,
+        SUM(category_commission_cost) AS category_commission_cost,
+        SUM(order_fee_cost) AS order_fee_cost,
+        SUM(logistics_last_mile_cost) AS logistics_last_mile_cost,
+        SUM(logistics_transfer_cost) AS logistics_transfer_cost,
+        SUM(logistics_drop_off) AS logistics_drop_off,
+        SUM(refund_orders) AS refund_orders,
+        SUM(refund_amount) AS refund_amount,
+        SUM(platform_service_cost) AS platform_service_cost,
+        SUM(return_commission_amount) AS return_commission_amount,
+        SUM(cancelled_amount) AS cancelled_amount,
+        SUM(reverse_logistics_cost) AS reverse_logistics_cost,
+        SUM(fbo_deliver_cost) AS fbo_deliver_cost,
+        SUM(fbo_inspection_cost) AS fbo_inspection_cost,
+        SUM(fbs_check_in_cost) AS fbs_check_in_cost,
+        SUM(fbs_operating_cost) AS fbs_operating_cost,
+        SUM(fbs_other_cost) AS fbs_other_cost,
+        SUM(sales_vat_cost) AS sales_vat_cost,
+        SUM(vat_cost) AS vat_cost,
+        SUM(customs_cost) AS customs_cost,
+        SUM(purchase_cost) AS purchase_cost,
+        SUM(purchase_shipping_cost) AS purchase_shipping_cost,
+        SUM(declared_value_cost) AS declared_value_cost,
+        SUM(profit_amount) AS profit_amount,
+        MAX(platform_currency) AS platform_currency,
+        MAX(fbs_currency) AS fbs_currency,
+        MAX(purchase_currency) AS purchase_currency,
+        MAX(logistics_currency) AS logistics_currency,
+        MAX(customs_currency) AS customs_currency
+        FROM dm_profit_report
+        WHERE 1=1
+        <!-- 使用 clientIds 数组进行 IN 查询 -->
+        <if test="reqVO.clientIds != null">
+            AND client_id IN
+            <foreach collection="reqVO.clientIds" item="clientId" open="(" separator="," close=")">
+                #{clientId}
+            </foreach>
+        </if>
+        <if test="reqVO.offerId != null">
+            AND offer_id = #{reqVO.offerId}
+        </if>
+        <!-- 使用 financeDate 范围进行查询 -->
+        <if test="reqVO.financeDate != null">
+            AND finance_date BETWEEN #{reqVO.financeDate[0]} AND #{reqVO.financeDate[1]}
+        </if>
+        <!-- 动态分组 -->
+        <choose>
+            <when test="reqVO.groupType == 'day'">
+                GROUP BY DATE(finance_date), client_id ,product_id, offer_id
+            </when>
+            <when test="reqVO.groupType == 'week'">
+                GROUP BY YEARWEEK(finance_date, 1), client_id, product_id, offer_id
+            </when>
+            <when test="reqVO.groupType == 'month'">
+                GROUP BY DATE_FORMAT(finance_date, '%Y-%m'), client_id, product_id, offer_id
+            </when>
+            <otherwise>
+                GROUP BY DATE(finance_date), client_id, product_id, offer_id  <!-- 默认按天分组 -->
+            </otherwise>
+        </choose>
+        ORDER BY finance_date DESC, sales_amount DESC
+    </select>
+
+    <delete id="deleteProfitReport">
+        DELETE FROM dm_profit_report WHERE
+        client_id IN (
+            <foreach collection="clientIds" item="clientid" separator=",">
+                #{clientid}
+            </foreach>
+        )
+        AND finance_date BETWEEN #{financeDate[0]} AND #{financeDate[1]}
+
+    </delete>
+</mapper>
