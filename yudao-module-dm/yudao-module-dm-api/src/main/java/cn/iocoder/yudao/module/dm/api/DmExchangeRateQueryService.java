@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.dm.api;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.module.dm.enums.ApiConstants;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import java.math.BigDecimal;
 
 /**
@@ -7,19 +16,15 @@ import java.math.BigDecimal;
  * @author: Zeno
  * @createTime: 2025/03/20 21:08
  */
+@FeignClient(name = ApiConstants.NAME) // ① @FeignClient 注解
+@Tag(name = "RPC 服务 - 汇率") // ② Swagger 接口文档
 public interface DmExchangeRateQueryService {
 
-    /**
-     * 获取自定义汇率
-     * @param baseCurrency 基础币种
-     * @return 汇率
-     */
-    BigDecimal getExchangeRate(Integer baseCurrency);
+    String PREFIX = ApiConstants.PREFIX + "/exchange";
 
-    /**
-     * 获取自定义汇率
-     * @param currencyCode 币种
-     * @return 汇率
-     */
-    BigDecimal getExchangeRate(String currencyCode);
+    @GetMapping(PREFIX + "/getExchangeRate") // ③ Spring MVC 接口注解
+    @Operation(summary = "获取自定义汇率")  // ② Swagger 接口文档
+    @Parameter(name = "baseCurrency", description = "币种", required = true, example = "1024") // ② Swagger 接口文档
+    CommonResult<BigDecimal> getExchangeRate(@RequestParam("baseCurrency") Integer baseCurrency);
+
 }

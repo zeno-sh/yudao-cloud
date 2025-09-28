@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.dm.api.DmProductPurchaseQueryService;
 import cn.iocoder.yudao.module.dm.dto.ProductPurchaseDTO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPurchaseDO;
@@ -26,14 +27,14 @@ public class DmProductPurchaseQueryServiceImpl implements DmProductPurchaseQuery
     private ProductInfoService productInfoService;
 
     @Override
-    public ProductPurchaseDTO getProductPurchaseByProductId(Long productId) {
+    public CommonResult<ProductPurchaseDTO> getProductPurchaseByProductId(Long productId) {
         if (productId == null) {
-            return null;
+            return CommonResult.success(null);
         }
         
         List<ProductPurchaseDO> productPurchaseList = productInfoService.getProductPurchaseListByProductId(productId);
         if (productPurchaseList == null || productPurchaseList.isEmpty()) {
-            return null;
+            return CommonResult.success(null);
         }
         
         // 优先选择首选的采购信息，如果没有首选的则取第一个
@@ -42,27 +43,28 @@ public class DmProductPurchaseQueryServiceImpl implements DmProductPurchaseQuery
                 .findFirst()
                 .orElse(productPurchaseList.get(0));
         
-        return convertToDTO(productPurchase);
+        return CommonResult.success(convertToDTO(productPurchase));
     }
 
     @Override
-    public Map<Long, ProductPurchaseDTO> batchGetProductPurchaseByProductIds(Collection<Long> productIds) {
+    public CommonResult<Map<Long, ProductPurchaseDTO>> batchGetProductPurchaseByProductIds(Collection<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) {
-            return Collections.emptyMap();
+            return CommonResult.success(Collections.emptyMap());
         }
         
         Map<Long, ProductPurchaseDO> productPurchaseMap = productInfoService.batchProductPurchaseListByProductIds(
                 productIds.toArray(new Long[0]));
         
         if (productPurchaseMap == null || productPurchaseMap.isEmpty()) {
-            return Collections.emptyMap();
+            return CommonResult.success(Collections.emptyMap());
         }
         
-        return productPurchaseMap.entrySet().stream()
+        Map<Long, ProductPurchaseDTO> result = productPurchaseMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> convertToDTO(entry.getValue())
                 ));
+        return CommonResult.success(result);
     }
 
     /**

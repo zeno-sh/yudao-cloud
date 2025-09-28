@@ -1,15 +1,12 @@
-package cn.iocoder.yudao.module.system.framework.datapermission.config;
+package cn.iocoder.yudao.module.dm.framework.datapermission;
 
-import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
-import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.framework.datapermission.core.rule.dept.DeptDataPermissionRuleCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * system 模块的数据权限 Configuration
- *
- * @author 芋道源码
+ * @Author: Jax
+ * @Date: Created in 11:57 2025/9/28
  */
 @Configuration(proxyBeanMethods = false)
 public class DataPermissionConfiguration {
@@ -18,12 +15,10 @@ public class DataPermissionConfiguration {
     public DeptDataPermissionRuleCustomizer sysDeptDataPermissionRuleCustomizer() {
         return rule -> {
             // dept
-            rule.addDeptColumn(AdminUserDO.class);
-            rule.addDeptColumn(DeptDO.class, "id");
+            rule.addDeptColumn("dm_purchase_plan", "dept_id");
 
             // user
-            rule.addUserColumn(AdminUserDO.class, "id");
+            rule.addUserColumn("dm_purchase_plan", "creator");
         };
     }
-
 }

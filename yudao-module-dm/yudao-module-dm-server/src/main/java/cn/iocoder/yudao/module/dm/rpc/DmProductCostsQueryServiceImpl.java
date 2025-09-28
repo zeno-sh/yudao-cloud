@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.dm.api.DmProductCostsQueryService;
 import cn.iocoder.yudao.module.dm.dto.ProductCostsDTO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.productcosts.ProductCostsDO;
@@ -25,45 +26,46 @@ public class DmProductCostsQueryServiceImpl implements DmProductCostsQueryServic
     private ProductCostsService productCostsService;
 
     @Override
-    public ProductCostsDTO getProductCostsByProductId(Long productId) {
+    public CommonResult<ProductCostsDTO> getProductCostsByProductId(Long productId) {
         if (productId == null) {
-            return null;
+            return CommonResult.success(null);
         }
         
         List<ProductCostsDO> productCostsList = productCostsService.getProductCostsListByProductId(productId);
         if (productCostsList == null || productCostsList.isEmpty()) {
-            return null;
+            return CommonResult.success(null);
         }
         
         // 取第一个成本记录（如果有多个的话）
-        return convertToDTO(productCostsList.get(0));
+        return CommonResult.success(convertToDTO(productCostsList.get(0)));
     }
 
     @Override
-    public List<ProductCostsDTO> batchGetProductCostsByProductIds(Collection<Long> productIds) {
+    public CommonResult<List<ProductCostsDTO>> batchGetProductCostsByProductIds(Collection<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) {
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
         
         List<ProductCostsDO> productCostsList = productCostsService.batchProductCostsListByProductIds(productIds);
         if (productCostsList == null || productCostsList.isEmpty()) {
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
         
-        return productCostsList.stream()
+        List<ProductCostsDTO> result = productCostsList.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+        return CommonResult.success(result);
     }
 
     @Override
-    public ProductCostsDTO getProductCostsByPlatformAndProductId(Integer platform, Long productId) {
+    public CommonResult<ProductCostsDTO> getProductCostsByPlatformAndProductId(Integer platform, Long productId) {
         if (platform == null || productId == null) {
-            return null;
+            return CommonResult.success(null);
         }
         
         List<ProductCostsDO> productCostsList = productCostsService.getProductCostsListByProductId(productId);
         if (productCostsList == null || productCostsList.isEmpty()) {
-            return null;
+            return CommonResult.success(null);
         }
         
         // 根据平台过滤
@@ -72,25 +74,26 @@ public class DmProductCostsQueryServiceImpl implements DmProductCostsQueryServic
                 .findFirst()
                 .orElse(null);
                 
-        return productCosts != null ? convertToDTO(productCosts) : null;
+        return CommonResult.success(productCosts != null ? convertToDTO(productCosts) : null);
     }
 
     @Override
-    public List<ProductCostsDTO> batchGetProductCostsByPlatformAndProductIds(Integer platform, Collection<Long> productIds) {
+    public CommonResult<List<ProductCostsDTO>> batchGetProductCostsByPlatformAndProductIds(Integer platform, Collection<Long> productIds) {
         if (platform == null || productIds == null || productIds.isEmpty()) {
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
         
         List<ProductCostsDO> productCostsList = productCostsService.batchProductCostsListByProductIds(productIds);
         if (productCostsList == null || productCostsList.isEmpty()) {
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
         
         // 根据平台过滤
-        return productCostsList.stream()
+        List<ProductCostsDTO> result = productCostsList.stream()
                 .filter(costs -> platform.equals(costs.getPlatform()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+        return CommonResult.success(result);
     }
 
     /**

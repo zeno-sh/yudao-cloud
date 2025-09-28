@@ -702,7 +702,7 @@ INSERT INTO system_menu(
 )
 VALUES (
     '进销存报表', '', 1, 3, 0,
-    'report', 'fa:dashboard', '', '', 0, b'1', b'1', b'1',
+    '/report', 'fa:dashboard', '', '', 0, b'1', b'1', b'1',
     '1', '2024-12-27 21:50:35', '1', '2024-12-27 21:52:43', b'0'
 );
 

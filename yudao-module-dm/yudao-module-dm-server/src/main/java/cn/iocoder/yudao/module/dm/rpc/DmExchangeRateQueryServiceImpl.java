@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.dm.api.DmExchangeRateQueryService;
 import cn.iocoder.yudao.module.dm.dal.dataobject.exchangerates.ExchangeRatesDO;
 import cn.iocoder.yudao.module.dm.service.exchangerates.ExchangeRatesService;
@@ -19,16 +20,12 @@ public class DmExchangeRateQueryServiceImpl implements DmExchangeRateQueryServic
     private ExchangeRatesService exchangeRatesService;
 
     @Override
-    public BigDecimal getExchangeRate(Integer baseCurrency) {
+    public CommonResult<BigDecimal> getExchangeRate(Integer baseCurrency) {
         ExchangeRatesDO exchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(baseCurrency);
         if (exchangeRatesDO != null) {
-            return exchangeRatesDO.getCustomRate();
+            return CommonResult.success(exchangeRatesDO.getCustomRate());
         }
         return null;
     }
 
-    @Override
-    public BigDecimal getExchangeRate(String currencyCode) {
-        return null;
-    }
 }

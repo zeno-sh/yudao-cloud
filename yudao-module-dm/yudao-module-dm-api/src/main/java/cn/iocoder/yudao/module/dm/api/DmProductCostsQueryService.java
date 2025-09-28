@@ -1,49 +1,50 @@
 package cn.iocoder.yudao.module.dm.api;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.dm.dto.ProductCostsDTO;
+import cn.iocoder.yudao.module.dm.enums.ApiConstants;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collection;
 import java.util.List;
 
 /**
- * 产品成本查询 API 接口
- *
+ * 产品成本
  * @author Jax
  */
+@FeignClient(name = ApiConstants.NAME)
+@Tag(name = "RPC 服务 - 产品成本")
 public interface DmProductCostsQueryService {
 
-    /**
-     * 根据产品ID获取产品成本信息
-     *
-     * @param productId 产品ID
-     * @return 产品成本信息
-     */
-    ProductCostsDTO getProductCostsByProductId(Long productId);
+    String PREFIX = ApiConstants.PREFIX + "/product-costs";
 
-    /**
-     * 根据产品ID列表批量获取产品成本信息
-     *
-     * @param productIds 产品ID列表
-     * @return 产品成本信息列表
-     */
-    List<ProductCostsDTO> batchGetProductCostsByProductIds(Collection<Long> productIds);
+    @GetMapping(PREFIX + "/getByProductId")
+    @Operation(summary = "根据产品ID获取产品成本信息")
+    @Parameter(name = "productId", description = "产品ID", required = true)
+    CommonResult<ProductCostsDTO> getProductCostsByProductId(@RequestParam("productId") Long productId);
 
-    /**
-     * 根据平台和产品ID获取产品成本信息
-     *
-     * @param platform 目标平台
-     * @param productId 产品ID
-     * @return 产品成本信息
-     */
-    ProductCostsDTO getProductCostsByPlatformAndProductId(Integer platform, Long productId);
+    @GetMapping(PREFIX + "/batchGetByProductIds")
+    @Operation(summary = "根据产品ID列表批量获取产品成本信息")
+    @Parameter(name = "productIds", description = "产品ID列表，逗号分隔", required = true)
+    CommonResult<List<ProductCostsDTO>> batchGetProductCostsByProductIds(@RequestParam("productIds") Collection<Long> productIds);
 
-    /**
-     * 根据平台和产品ID列表批量获取产品成本信息
-     *
-     * @param platform 目标平台
-     * @param productIds 产品ID列表
-     * @return 产品成本信息列表
-     */
-    List<ProductCostsDTO> batchGetProductCostsByPlatformAndProductIds(Integer platform, Collection<Long> productIds);
+    @GetMapping(PREFIX + "/getByPlatformAndProductId")
+    @Operation(summary = "根据平台和产品ID获取产品成本信息")
+    @Parameter(name = "platform", description = "目标平台", required = true)
+    @Parameter(name = "productId", description = "产品ID", required = true)
+    CommonResult<ProductCostsDTO> getProductCostsByPlatformAndProductId(@RequestParam("platform") Integer platform,
+                                                                        @RequestParam("productId") Long productId);
+
+    @GetMapping(PREFIX + "/batchGetByPlatformAndProductIds")
+    @Operation(summary = "根据平台和产品ID列表批量获取产品成本信息")
+    @Parameter(name = "platform", description = "目标平台", required = true)
+    @Parameter(name = "productIds", description = "产品ID列表，逗号分隔", required = true)
+    CommonResult<List<ProductCostsDTO>> batchGetProductCostsByPlatformAndProductIds(@RequestParam("platform") Integer platform,
+                                                                                    @RequestParam("productIds") Collection<Long> productIds);
 
 } 

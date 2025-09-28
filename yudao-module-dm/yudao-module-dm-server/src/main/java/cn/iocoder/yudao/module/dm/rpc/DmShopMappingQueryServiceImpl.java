@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.dm.api.DmShopMappingQueryService;
 import cn.iocoder.yudao.module.dm.dal.dataobject.ozonshopmapping.OzonShopMappingDO;
@@ -30,72 +31,72 @@ public class DmShopMappingQueryServiceImpl implements DmShopMappingQueryService 
     private AuthShopMappingService authShopMappingService;
 
     @Override
-    public ShopMappingDTO getShopMappingByClientId(String clientId) {
+    public CommonResult<ShopMappingDTO> getShopMappingByClientId(String clientId) {
         log.info("开始查询门店映射信息, clientId: {}", clientId);
         
         if (clientId == null || clientId.trim().isEmpty()) {
             log.warn("clientId为空，返回null");
-            return null;
+            return CommonResult.success(null);
         }
         
         try {
             OzonShopMappingDO shopMapping = ozonShopMappingService.getOzonShopMappingByClientId(clientId);
             if (shopMapping == null) {
                 log.info("未找到clientId对应的门店映射信息, clientId: {}", clientId);
-                return null;
+                return CommonResult.success(null);
             }
             
             ShopMappingDTO result = BeanUtils.toBean(shopMapping, ShopMappingDTO.class);
             log.info("成功查询到门店映射信息, clientId: {}, shopName: {}", clientId, result.getShopName());
-            return result;
+            return CommonResult.success(result);
         } catch (Exception e) {
             log.error("查询门店映射信息失败, clientId: {}", clientId, e);
-            return null;
+            return CommonResult.success(null);
         }
     }
 
     @Override
-    public List<ShopMappingDTO> batchGetShopMappingByClientIds(List<String> clientIds) {
+    public CommonResult<List<ShopMappingDTO>> batchGetShopMappingByClientIds(List<String> clientIds) {
         log.info("开始批量查询门店映射信息, clientIds: {}", clientIds);
         
         if (clientIds == null || clientIds.isEmpty()) {
             log.warn("clientIds为空，返回空列表");
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
         
         try {
             List<OzonShopMappingDO> shopMappings = ozonShopMappingService.batchShopListByClientIds(clientIds);
             if (shopMappings == null || shopMappings.isEmpty()) {
                 log.info("未找到clientIds对应的门店映射信息, clientIds: {}", clientIds);
-                return Collections.emptyList();
+                return CommonResult.success(Collections.emptyList());
             }
             
             List<ShopMappingDTO> result = BeanUtils.toBean(shopMappings, ShopMappingDTO.class);
             log.info("成功批量查询到门店映射信息, clientIds: {}, 返回数量: {}", clientIds, result.size());
-            return result;
+            return CommonResult.success(result);
         } catch (Exception e) {
             log.error("批量查询门店映射信息失败, clientIds: {}", clientIds, e);
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
     }
 
     @Override
-    public List<ShopMappingDTO> getAllAvailableShopMappings() {
+    public CommonResult<List<ShopMappingDTO>> getAllAvailableShopMappings() {
         log.info("开始查询所有可用的门店映射信息");
         
         try {
             List<OzonShopMappingDO> shopMappings = authShopMappingService.getAuthShopList();
             if (shopMappings == null || shopMappings.isEmpty()) {
                 log.info("未找到任何门店映射信息");
-                return Collections.emptyList();
+                return CommonResult.success(Collections.emptyList());
             }
             
             List<ShopMappingDTO> result = BeanUtils.toBean(shopMappings, ShopMappingDTO.class);
             log.info("成功查询到所有门店映射信息, 返回数量: {}", result.size());
-            return result;
+            return CommonResult.success(result);
         } catch (Exception e) {
             log.error("查询所有门店映射信息失败", e);
-            return Collections.emptyList();
+            return CommonResult.success(Collections.emptyList());
         }
     }
 } 

@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.dm.api.DmProductQueryService;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductInfoDO;
@@ -24,16 +25,16 @@ public class DmProductQueryServiceImpl implements DmProductQueryService {
     private ProductInfoMapper productInfoMapper;
 
     @Override
-    public Set<Long> getProductIdsByUserPermission() {
+    public CommonResult<Set<Long>> getProductIdsByUserPermission() {
 
         // 框架会根据 ProductDataPermissionRule 规则获取用户权限内的产品ID
         LambdaQueryWrapperX<ProductInfoDO> wrapperX = new LambdaQueryWrapperX<>();
 
         List<ProductInfoDO> productInfoDOS = productInfoMapper.selectList(wrapperX);
         if (CollectionUtils.isNotEmpty(productInfoDOS)) {
-            return productInfoDOS.stream().map(ProductInfoDO::getId).collect(Collectors.toSet());
+            return CommonResult.success(productInfoDOS.stream().map(ProductInfoDO::getId).collect(Collectors.toSet()));
         }
 
-        return Collections.emptySet();
+        return CommonResult.success(Collections.emptySet());
     }
 }
