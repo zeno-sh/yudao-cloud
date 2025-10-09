@@ -764,4 +764,14 @@
         </plugins>
     </build>
 
+    <!-- 统一配置发布仓库 -->
+    <distributionManagement>
+        <repository>
+            <!-- 须与 settings.xml 中 server 的 id 一致 -->
+            <id>shiteng-dev-java-springboot-jar-maven</id>
+            <name>shiteng-dev-java-springboot-jar-maven</name>
+            <url>https://maven.cnb.cool/shiteng-dev/java-springboot-jar-maven/-/packages/</url>
+        </repository>
+    </distributionManagement>
+
 </project>
