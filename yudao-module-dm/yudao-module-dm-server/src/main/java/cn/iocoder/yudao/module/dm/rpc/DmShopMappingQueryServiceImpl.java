@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.dm.infrastructure.AuthShopMappingService;
 import cn.iocoder.yudao.module.dm.service.ozonshopmapping.OzonShopMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -21,7 +22,7 @@ import java.util.List;
  * @createTime: 2025/01/16 10:00
  */
 @Slf4j
-@Service
+@RestController
 public class DmShopMappingQueryServiceImpl implements DmShopMappingQueryService {
 
     @Resource

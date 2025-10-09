@@ -29,6 +29,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -40,7 +41,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
  * @author: Zeno
  * @createTime: 2024/06/13 10:54
  */
-@Service
+@RestController
 public class PurchasePlanLifeService {
 
     @Resource

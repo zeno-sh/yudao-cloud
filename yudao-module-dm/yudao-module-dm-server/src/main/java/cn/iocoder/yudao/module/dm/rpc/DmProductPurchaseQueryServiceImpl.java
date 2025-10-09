@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPurchaseDO;
 import cn.iocoder.yudao.module.dm.service.product.ProductInfoService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.Collection;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Jax
  */
-@Service
+@RestController
 public class DmProductPurchaseQueryServiceImpl implements DmProductPurchaseQueryService {
 
     @Resource
