@@ -143,4 +143,34 @@ public interface PermissionService {
      */
     DeptDataPermissionRespDTO getDeptDataPermission(Long userId);
 
+
+    /**
+     * 获得用户拥有的门店集合
+     * @param userId
+     * @return
+     */
+    Set<Long> getUserShopIdListByUserId(Long userId);
+
+    /**
+     * 获得用户拥有的产品集合
+     * @param userId
+     * @return
+     */
+    Set<Long> getUserProductIdListByUserId(Long userId);
+
+    /**
+     * 赋予用户门店
+     *
+     * @param userId  用户编号
+     * @param shopIds 门店编号数组
+     */
+    void assignUserShop(Long userId, Set<Long> shopIds);
+
+    /**
+     * 赋予用户产品
+     *
+     * @param userId     用户编号
+     * @param productIds 产品编号数组
+     */
+    void assignUserProduct(Long userId, Set<Long> productIds);
 }

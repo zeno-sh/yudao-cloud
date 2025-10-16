@@ -204,6 +204,12 @@ spring:
             - Path=/admin-api/fbs/**
           filters:
             - RewritePath=/admin-api/fbs/v3/api-docs, /v3/api-docs
+        - id: amazon-sellfox-admin-api
+          uri: grayLb://amazon-sellfox-server
+          predicates: # 断言，作为路由的匹配条件，对应 RouteDefinition 数组
+            - Path=/admin-api/sellfox/**
+          filters:
+            - RewritePath=/admin-api/amazon/sellfox/v3/api-docs, /v3/api-docs
       x-forwarded:
         prefix-enabled: false # 避免 Swagger 重复带上额外的 /admin-api/system 前缀
 
@@ -267,6 +273,9 @@ knife4j:
       - name: fbs-server
         service-name: fbs-server
         url: /admin-api/fbs/v3/api-docs
+      - name: amazon-sellfox-server
+        service-name: amazon-sellfox-server
+        url: /admin-api/amazon/sellfox/v3/api-docs
 
 --- #################### 芋道相关配置 ####################
 

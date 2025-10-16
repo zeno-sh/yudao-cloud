@@ -61,10 +61,10 @@ public class BpmProcessInstanceApiImpl implements BpmProcessInstanceApi {
     }
 
     @Override
-    public List<BpmTaskDTO> getProcessTaskInfo(String processInstanceId) {
+    public CommonResult<List<BpmTaskDTO>> getProcessTaskInfo(String processInstanceId) {
         List<HistoricTaskInstance> taskList = taskService.getTaskListByProcessInstanceId(processInstanceId, true);
         if (CollUtil.isEmpty(taskList)) {
-            return Collections.emptyList();
+            return success(Collections.emptyList());
         }
 
         // 拼接数据
@@ -82,6 +82,6 @@ public class BpmProcessInstanceApiImpl implements BpmProcessInstanceApi {
 
         List<BpmTaskRespVO> bpmTaskRespVOS = BpmTaskConvert.INSTANCE.buildTaskListByProcessInstanceId(taskList,
                 formMap, userMap, deptMap);
-        return BeanUtils.toBean(bpmTaskRespVOS, BpmTaskDTO.class);
+        return success(BeanUtils.toBean(bpmTaskRespVOS, BpmTaskDTO.class));
     }
 }

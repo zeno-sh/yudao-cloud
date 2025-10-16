@@ -2,9 +2,7 @@ package cn.iocoder.yudao.module.system.controller.admin.permission;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.*;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,4 +77,35 @@ public class PermissionController {
         return success(true);
     }
 
+    @Operation(summary = "获得管理员拥有的门店编号列表")
+    @Parameter(name = "userId", description = "用户编号", required = true)
+    @GetMapping("/list-user-shop")
+    @PreAuthorize("@ss.hasPermission('system:permission:assign-user-role')")
+    public CommonResult<Set<Long>> listAdminShops(@RequestParam("userId") Long userId) {
+        return success(permissionService.getUserShopIdListByUserId(userId));
+    }
+
+    @Operation(summary = "获得管理员拥有的产品编号列表")
+    @Parameter(name = "userId", description = "用户编号", required = true)
+    @GetMapping("/list-user-product")
+    @PreAuthorize("@ss.hasPermission('system:permission:assign-user-product')")
+    public CommonResult<Set<Long>> listAdminProducts(@RequestParam("userId") Long userId) {
+        return success(permissionService.getUserProductIdListByUserId(userId));
+    }
+
+    @PostMapping("/assign-user-shop")
+    @Operation(summary = "赋予用户门店")
+    @PreAuthorize("@ss.hasPermission('system:permission:assign-user-shop')")
+    public CommonResult<Boolean> assignUserShop(@Validated @RequestBody PermissionAssignUserShopReqVO reqVO) {
+        permissionService.assignUserShop(reqVO.getUserId(), reqVO.getShopIds());
+        return success(true);
+    }
+
+    @PostMapping("/assign-user-product")
+    @Operation(summary = "赋予用户产品")
+    @PreAuthorize("@ss.hasPermission('system:permission:assign-user-product')")
+    public CommonResult<Boolean> assignUserProduct(@Validated @RequestBody PermissionAssignUserProductReqVO reqVO) {
+        permissionService.assignUserProduct(reqVO.getUserId(), reqVO.getProductIds());
+        return success(true);
+    }
 }

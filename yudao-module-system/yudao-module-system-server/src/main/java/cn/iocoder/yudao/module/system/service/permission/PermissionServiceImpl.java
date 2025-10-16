@@ -12,6 +12,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleMenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.UserRoleDO;
+import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMenuMapper;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.UserRoleMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
@@ -336,6 +337,35 @@ public class PermissionServiceImpl implements PermissionService {
      */
     private PermissionServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
+    }
+
+    @Override
+    public Set<Long> getUserShopIdListByUserId(Long userId) {
+        AdminUserDO user = userService.getUser(userId);
+        if (null == user) {
+            return Collections.emptySet();
+        }
+        return user.getShopIds();
+    }
+
+    @Override
+    public Set<Long> getUserProductIdListByUserId(Long userId) {
+        AdminUserDO user = userService.getUser(userId);
+        if (null == user) {
+            return Collections.emptySet();
+        }
+        return user.getProductIds();
+    }
+
+    @Override
+    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    public void assignUserShop(Long userId, Set<Long> shopIds) {
+        userService.updateUserAssignShop(userId, shopIds);
+    }
+
+    @Override
+    public void assignUserProduct(Long userId, Set<Long> productIds) {
+        userService.updateUserAssignProduct(userId, productIds);
     }
 
 }

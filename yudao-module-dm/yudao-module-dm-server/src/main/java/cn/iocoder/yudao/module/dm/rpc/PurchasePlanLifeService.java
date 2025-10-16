@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.dm.rpc;
 
 import cn.hutool.core.date.DateUtil;
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmTaskDTO;
@@ -334,7 +335,8 @@ public class PurchasePlanLifeService {
                 processVO.setStatus(PurchaseStepStatusEnum.ERROR.getStatus());
                 // TODO: 添加驳回原因
                 PurchasePlanDO purchasePlan = purchasePlanService.getPurchasePlan(purchasePlanItemDO.getPlanId());
-                List<BpmTaskDTO> processTaskInfoList = bpmProcessInstanceApi.getProcessTaskInfo(purchasePlan.getProcessInstanceId());
+                CommonResult<List<BpmTaskDTO>> result = bpmProcessInstanceApi.getProcessTaskInfo(purchasePlan.getProcessInstanceId());
+                List<BpmTaskDTO> processTaskInfoList = result.getCheckedData();
                 processTaskInfoList.stream().filter(bpmTaskDTO -> BpmTaskStatusEnum.REJECT.getStatus().equals(bpmTaskDTO.getStatus()))
                         .forEach(bpmTaskDTO -> {
                             items.add(createProcessItemVO(String.format("审核驳回：%s", bpmTaskDTO.getReason()),

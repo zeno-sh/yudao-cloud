@@ -36,5 +36,6 @@ public interface BpmProcessInstanceApi {
      */
     @PostMapping(PREFIX + "/get-task-info")
     @Operation(summary = "根据流程ID查询任务详情")
-    List<BpmTaskDTO> getProcessTaskInfo(@RequestParam("processInstanceId") String processInstanceId);
+    @Parameter(name = "processInstanceId", description = "流程实例ID", required = true)
+    CommonResult<List<BpmTaskDTO>> getProcessTaskInfo(@RequestParam("processInstanceId") String processInstanceId);
 }

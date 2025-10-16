@@ -138,8 +138,19 @@
         </plugins>
     </build>
 
-    <!-- 使用 huawei / aliyun 的 Maven 源，提升下载速度 -->
+    <!-- 使用 huawei / aliyun 的 Maven 源,提升下载速度 -->
     <repositories>
+        <!-- CNB 私有仓库,用于拉取内部依赖 -->
+        <repository>
+            <id>shiteng-dev-java-springboot-jar-maven</id>
+            <name>shiteng-dev-java-springboot-jar-maven</name>
+            <url>https://maven.cnb.cool/shiteng-dev/java-springboot-jar-maven/-/packages/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <!-- SNAPSHOT 版本每次构建都检查更新 -->
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
         <repository>
             <id>huaweicloud</id>
             <name>huawei</name>
