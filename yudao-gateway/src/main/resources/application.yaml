@@ -192,6 +192,7 @@ spring:
             - Path=/admin-api/iot/**
           filters:
             - RewritePath=/admin-api/iot/v3/api-docs, /v3/api-docs # 配置，保证转发到 /v3/api-docs
+        ## dm-server 服务
         - id: dm-admin-api
           uri: grayLb://dm-server
           predicates: # 断言，作为路由的匹配条件，对应 RouteDefinition 数组

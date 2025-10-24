@@ -122,8 +122,8 @@ logging:
 
 # 芋道配置项，设置当前项目所有自定义的配置
 yudao:
-  env: # 多环境的配置项
-    tag: ${HOSTNAME}
+#  env: # 多环境的配置项
+#    tag: ${HOSTNAME}
   security:
     mock-enable: true
   access-log: # 访问日志的配置项
