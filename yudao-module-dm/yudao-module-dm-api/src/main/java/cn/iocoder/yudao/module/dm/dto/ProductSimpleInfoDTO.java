@@ -32,4 +32,9 @@ public class ProductSimpleInfoDTO implements Serializable {
      * SKU名称
      */
     private String skuName;
+
+    /**
+     * 产品类型：0=普通产品, 1=组合产品
+     */
+    private Integer productType;
 }

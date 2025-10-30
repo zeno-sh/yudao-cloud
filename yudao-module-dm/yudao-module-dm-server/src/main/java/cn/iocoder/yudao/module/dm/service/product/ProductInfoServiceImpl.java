@@ -37,7 +37,6 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.module.dm.enums.ErrorCodeConstants.*;
 
@@ -506,6 +505,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
                             productSimpleInfoVO.setSkuId(productInfoDO.getSkuId());
                             productSimpleInfoVO.setSkuName(productInfoDO.getSkuName());
                             productSimpleInfoVO.setProductId(productInfoDO.getId());
+                            productSimpleInfoVO.setProductType(productInfoDO.getProductType());
                             return productSimpleInfoVO;
                         },
                         (existing, replacement) -> existing // 处理键冲突的策略
