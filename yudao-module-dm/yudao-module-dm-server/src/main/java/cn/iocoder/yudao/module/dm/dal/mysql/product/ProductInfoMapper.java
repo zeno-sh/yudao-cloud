@@ -22,10 +22,24 @@ public interface ProductInfoMapper extends BaseMapperX<ProductInfoDO> {
     default PageResult<ProductInfoDO> selectPage(ProductInfoPageReqVO reqVO) {
         // 如果没有供应商相关查询条件，使用原有的简单查询
         if (StringUtils.isEmpty(reqVO.getSupplierCode())) {
-            LambdaQueryWrapperX<ProductInfoDO> wrapper = new LambdaQueryWrapperX<ProductInfoDO>()
-                    .likeIfPresent(ProductInfoDO::getSkuId, reqVO.getSkuId())
-                    .likeIfPresent(ProductInfoDO::getSkuName, reqVO.getSkuName())
-                    .eqIfPresent(ProductInfoDO::getSaleStatus, reqVO.getSaleStatus())
+            LambdaQueryWrapperX<ProductInfoDO> wrapper = new LambdaQueryWrapperX<>();
+            
+            // SKU ID 或 SKU 名称的 OR 查询
+            if (StringUtils.isNotEmpty(reqVO.getSkuId()) || StringUtils.isNotEmpty(reqVO.getSkuName())) {
+                wrapper.and(w -> {
+                    if (StringUtils.isNotEmpty(reqVO.getSkuId())) {
+                        w.like(ProductInfoDO::getSkuId, reqVO.getSkuId());
+                    }
+                    if (StringUtils.isNotEmpty(reqVO.getSkuId()) && StringUtils.isNotEmpty(reqVO.getSkuName())) {
+                        w.or();
+                    }
+                    if (StringUtils.isNotEmpty(reqVO.getSkuName())) {
+                        w.like(ProductInfoDO::getSkuName, reqVO.getSkuName());
+                    }
+                });
+            }
+            
+            wrapper.eqIfPresent(ProductInfoDO::getSaleStatus, reqVO.getSaleStatus())
                     .eqIfPresent(ProductInfoDO::getCategoryId, reqVO.getCategoryId())
                     .eqIfPresent(ProductInfoDO::getBrandId, reqVO.getBrandId())
                     .eqIfPresent(ProductInfoDO::getFlagId, reqVO.getFlagId())
@@ -42,12 +56,19 @@ public interface ProductInfoMapper extends BaseMapperX<ProductInfoDO> {
                 .selectAll(ProductInfoDO.class)
                 .leftJoin(SupplierPriceOfferDO.class, SupplierPriceOfferDO::getProductId, ProductInfoDO::getId);
         
-        // 产品信息的基本查询条件
-        if (StringUtils.isNotEmpty(reqVO.getSkuId())) {
-            wrapper.like(ProductInfoDO::getSkuId, reqVO.getSkuId());
-        }
-        if (StringUtils.isNotEmpty(reqVO.getSkuName())) {
-            wrapper.like(ProductInfoDO::getSkuName, reqVO.getSkuName());
+        // 产品信息的基本查询条件 - SKU ID 或 SKU 名称的 OR 查询
+        if (StringUtils.isNotEmpty(reqVO.getSkuId()) || StringUtils.isNotEmpty(reqVO.getSkuName())) {
+            wrapper.and(w -> {
+                if (StringUtils.isNotEmpty(reqVO.getSkuId())) {
+                    w.like(ProductInfoDO::getSkuId, reqVO.getSkuId());
+                }
+                if (StringUtils.isNotEmpty(reqVO.getSkuId()) && StringUtils.isNotEmpty(reqVO.getSkuName())) {
+                    w.or();
+                }
+                if (StringUtils.isNotEmpty(reqVO.getSkuName())) {
+                    w.like(ProductInfoDO::getSkuName, reqVO.getSkuName());
+                }
+            });
         }
         if (reqVO.getSaleStatus() != null) {
             wrapper.eq(ProductInfoDO::getSaleStatus, reqVO.getSaleStatus());
