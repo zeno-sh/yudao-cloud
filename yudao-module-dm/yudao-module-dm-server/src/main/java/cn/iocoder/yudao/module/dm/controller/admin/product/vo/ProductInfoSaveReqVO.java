@@ -85,4 +85,16 @@ public class ProductInfoSaveReqVO {
 
     @Schema(description = "产品成本结构")
     private List<ProductCostsDO> productCosts;
+    
+    // ========== 组合产品相关字段（新增）==========
+    
+    @Schema(description = "产品类型：0=普通产品 1=组合产品", example = "0")
+    private Integer productType;
+    
+    @Schema(description = "组合类型：1=自定义成本价 2=自动累计成本价", example = "2")
+    private Integer bundleType;
+    
+    @Schema(description = "组合产品明细列表（仅productType=1时填写）")
+    private List<ProductBundleItemReqVO> bundleItems;
+    
 }

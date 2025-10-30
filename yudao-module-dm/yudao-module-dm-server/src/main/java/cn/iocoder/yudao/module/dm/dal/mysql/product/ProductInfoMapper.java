@@ -77,5 +77,20 @@ public interface ProductInfoMapper extends BaseMapperX<ProductInfoDO> {
         
         return selectJoinPage(reqVO, ProductInfoDO.class, wrapper);
     }
+    
+    // ========== 组合产品相关方法（新增）==========
+    
+    /**
+     * 查询指定类型和组合类型的产品列表
+     *
+     * @param productType 产品类型
+     * @param bundleType 组合类型
+     * @return 产品列表
+     */
+    default java.util.List<ProductInfoDO> selectListByProductTypeAndBundleType(Integer productType, Integer bundleType) {
+        return selectList(new LambdaQueryWrapperX<ProductInfoDO>()
+                .eq(ProductInfoDO::getProductType, productType)
+                .eq(ProductInfoDO::getBundleType, bundleType));
+    }
 
 }

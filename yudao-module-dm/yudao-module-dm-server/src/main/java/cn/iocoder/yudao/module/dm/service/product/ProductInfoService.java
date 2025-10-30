@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPriceDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPlatformTrendDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPurchaseDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.SupplierPriceOfferDO;
+import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductBundleRelationDO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 
@@ -186,4 +187,26 @@ public interface ProductInfoService {
      * @return 产品ID到供应商报价的映射，key是productId，value是首选供应商报价（如无首选则为第一个报价）
      */
     Map<Long, SupplierPriceOfferDO> getSupplierPriceOfferMapByProductIds(Collection<Long> productIds);
+    
+    // ==================== 组合产品相关方法（新增）====================
+    
+    /**
+     * 获取组合产品的明细列表
+     *
+     * @param bundleProductId 组合产品ID
+     * @return 明细列表
+     */
+    List<ProductBundleRelationDO> getBundleRelations(Long bundleProductId);
+    
+    /**
+     * 重新计算组合产品成本价（仅自动累计模式）
+     *
+     * @param bundleProductId 组合产品ID
+     */
+    void recalculateBundleCostPrice(Long bundleProductId);
+    
+    /**
+     * 批量重新计算组合产品成本价（定时任务使用）
+     */
+    void batchRecalculateBundleCostPrice();
 }

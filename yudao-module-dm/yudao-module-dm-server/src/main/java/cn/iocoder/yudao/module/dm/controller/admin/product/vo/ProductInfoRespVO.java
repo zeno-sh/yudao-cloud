@@ -6,6 +6,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.List;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
@@ -100,5 +101,16 @@ public class ProductInfoRespVO {
     @Schema(description = "装箱率")
     @ExcelProperty("装箱率")
     private Integer pcs;
+    
+    // ========== 组合产品相关字段（新增）==========
+    
+    @Schema(description = "产品类型：0=普通产品 1=组合产品", example = "0")
+    private Integer productType;
+    
+    @Schema(description = "组合类型：1=自定义成本价 2=自动累计成本价", example = "2")
+    private Integer bundleType;
+    
+    @Schema(description = "组合产品明细列表（仅组合产品）")
+    private List<ProductBundleItemRespVO> bundleItems;
 
 }

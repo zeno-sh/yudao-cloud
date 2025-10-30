@@ -6,10 +6,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
-import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductInfoPageReqVO;
-import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductInfoRespVO;
-import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductInfoSaveReqVO;
-import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSupplierPriceOfferRespVO;
+import cn.iocoder.yudao.module.dm.controller.admin.product.vo.*;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.*;
 import cn.iocoder.yudao.module.dm.dal.dataobject.productcosts.ProductCostsDO;
 import cn.iocoder.yudao.module.dm.service.product.ProductInfoService;
@@ -29,6 +26,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -273,5 +271,66 @@ public class ProductInfoController {
         } else {
             return null; // 如果 URL 格式不对，返回 null
         }
+    }
+    
+    // ==================== 组合产品相关 API（新增）====================
+    
+    @GetMapping("/bundle-relations")
+    @Operation(summary = "获取组合产品明细列表")
+    @Parameter(name = "bundleProductId", description = "组合产品ID", required = true)
+    @PreAuthorize("@ss.hasPermission('dm:product-info:query')")
+    public CommonResult<List<ProductBundleItemRespVO>> getBundleRelations(@RequestParam("bundleProductId") Long bundleProductId) {
+        // 1. 获取关联关系
+        List<cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductBundleRelationDO> relations = 
+            productInfoService.getBundleRelations(bundleProductId);
+        
+        // 2. 转换为 VO（需要 JOIN 产品信息）
+        List<ProductBundleItemRespVO> result = new ArrayList<>();
+        for (cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductBundleRelationDO relation : relations) {
+            // 实时获取子产品信息
+            ProductInfoDO subProduct = productInfoService.getProductInfo(relation.getSubProductId());
+            if (subProduct == null) {
+                continue;
+            }
+            
+            ProductBundleItemRespVO vo = new ProductBundleItemRespVO();
+            vo.setId(relation.getId());
+            vo.setSubProductId(relation.getSubProductId());
+            vo.setQuantity(relation.getQuantity());
+            vo.setSortOrder(relation.getSortOrder());
+            vo.setRemark(relation.getRemark());
+            
+            // 填充实时子产品信息
+            vo.setSubSkuId(subProduct.getSkuId());
+            vo.setSubSkuName(subProduct.getSkuName());
+            vo.setUnit(subProduct.getUnit());
+            vo.setUnitCostPrice(subProduct.getCostPrice());
+            
+            // 计算总成本价
+            if (subProduct.getCostPrice() != null) {
+                vo.setTotalCostPrice(subProduct.getCostPrice().multiply(new java.math.BigDecimal(relation.getQuantity())));
+            }
+            
+            result.add(vo);
+        }
+        
+        return success(result);
+    }
+    
+    @PostMapping("/recalculate-bundle-cost")
+    @Operation(summary = "重新计算组合产品成本价（仅自动累计模式）")
+    @Parameter(name = "bundleProductId", description = "组合产品ID", required = true)
+    @PreAuthorize("@ss.hasPermission('dm:product-info:update')")
+    public CommonResult<Boolean> recalculateBundleCostPrice(@RequestParam("bundleProductId") Long bundleProductId) {
+        productInfoService.recalculateBundleCostPrice(bundleProductId);
+        return success(true);
+    }
+    
+    @PostMapping("/batch-recalculate-bundle-cost")
+    @Operation(summary = "批量重新计算所有自动累计模式的组合产品成本价")
+    @PreAuthorize("@ss.hasPermission('dm:product-info:update')")
+    public CommonResult<Boolean> batchRecalculateBundleCostPrice() {
+        productInfoService.batchRecalculateBundleCostPrice();
+        return success(true);
     }
 }

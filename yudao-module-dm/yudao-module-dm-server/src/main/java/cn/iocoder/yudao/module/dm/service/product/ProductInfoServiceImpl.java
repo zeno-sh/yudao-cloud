@@ -3,11 +3,13 @@ package cn.iocoder.yudao.module.dm.service.product;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.datapermission.core.util.DataPermissionUtils;
 import cn.iocoder.yudao.module.dm.dal.dataobject.plan.ProductSelectionPlanDO;
+import cn.iocoder.yudao.module.dm.dal.dataobject.product.*;
 import cn.iocoder.yudao.module.dm.dal.dataobject.productcosts.ProductCostsDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.purchase.PurchasePlanItemDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.supplier.ProductSupplierDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.transport.TransportPlanItemDO;
 import cn.iocoder.yudao.module.dm.dal.mysql.commission.CategoryCommissionMapper;
+import cn.iocoder.yudao.module.dm.dal.mysql.product.*;
 import cn.iocoder.yudao.module.dm.dal.mysql.productcosts.ProductCostsMapper;
 import cn.iocoder.yudao.module.dm.dal.mysql.supplier.ProductSupplierMapper;
 import cn.iocoder.yudao.module.dm.dal.mysql.transport.TransportPlanItemMapper;
@@ -31,21 +33,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import cn.iocoder.yudao.module.dm.controller.admin.product.vo.*;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductInfoDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductCustomsDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPriceDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPlatformTrendDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductPurchaseDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.SupplierPriceOfferDO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-
-import cn.iocoder.yudao.module.dm.dal.mysql.product.ProductInfoMapper;
-import cn.iocoder.yudao.module.dm.dal.mysql.product.ProductCustomsMapper;
-import cn.iocoder.yudao.module.dm.dal.mysql.product.ProductPriceMapper;
-import cn.iocoder.yudao.module.dm.dal.mysql.product.ProductPlatformTrendMapper;
-import cn.iocoder.yudao.module.dm.dal.mysql.product.ProductPurchaseMapper;
-import cn.iocoder.yudao.module.dm.dal.mysql.product.SupplierPriceOfferMapper;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -87,13 +76,39 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     private TransportPlanItemMapper transportPlanItemMapper;
     @Resource
     private ProductCostsMapper productCostsMapper;
+    @Resource
+    private ProductBundleRelationMapper bundleRelationMapper;
+    @Resource
+    private BundleProductServiceHelper bundleProductServiceHelper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createProductInfo(ProductInfoSaveReqVO createReqVO) {
         validateSkuExists(createReqVO.getSkuId(), createReqVO.getModelNumber());
+        
+        // ========== 组合产品校验（新增）==========
+        if (createReqVO.getProductType() != null && createReqVO.getProductType() == 1) {
+            bundleProductServiceHelper.validateBundleProduct(createReqVO);
+        }
+        
         // 插入
         ProductInfoDO productInfo = BeanUtils.toBean(createReqVO, ProductInfoDO.class);
+        
+        // ========== 组合产品成本价计算（新增）==========
+        if (productInfo.getProductType() != null && productInfo.getProductType() == 1) {
+            // 创建组合关系（临时，用于计算成本价）
+            List<ProductBundleRelationDO> tempRelations = 
+                bundleProductServiceHelper.createBundleRelations(null, createReqVO.getBundleItems());
+            
+            // 计算并设置成本价
+            BigDecimal calculatedCost = bundleProductServiceHelper.calculateBundleCostPrice(
+                productInfo.getBundleType(), 
+                productInfo.getCostPrice(), 
+                tempRelations
+            );
+            productInfo.setCostPrice(calculatedCost);
+        }
+        
         productInfoMapper.insert(productInfo);
 
         // 插入子表
@@ -103,6 +118,16 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         createProductPurchaseList(productInfo.getId(), createReqVO.getProductPurchases());
         createSupplierPriceOfferList(productInfo.getId(), createReqVO.getSupplierPriceOffers());
         createProductCostList(productInfo.getId(), createReqVO.getProductCosts());
+        
+        // ========== 插入组合产品关系（新增）==========
+        if (productInfo.getProductType() != null && productInfo.getProductType() == 1) {
+            List<ProductBundleRelationDO> relations = 
+                bundleProductServiceHelper.createBundleRelations(productInfo.getId(), createReqVO.getBundleItems());
+            for (ProductBundleRelationDO relation : relations) {
+                bundleRelationMapper.insert(relation);
+            }
+        }
+        
         // 返回
         return productInfo.getId();
     }
@@ -112,8 +137,29 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     public void updateProductInfo(ProductInfoSaveReqVO updateReqVO) {
         // 校验存在
         validateProductInfoExists(updateReqVO.getId());
+        
+        // ========== 组合产品校验（新增）==========
+        if (updateReqVO.getProductType() != null && updateReqVO.getProductType() == 1) {
+            bundleProductServiceHelper.validateBundleProduct(updateReqVO);
+        }
+        
         // 更新
         ProductInfoDO updateObj = BeanUtils.toBean(updateReqVO, ProductInfoDO.class);
+        
+        // ========== 组合产品成本价计算（新增）==========
+        if (updateObj.getProductType() != null && updateObj.getProductType() == 1) {
+            // 创建组合关系（临时，用于计算成本价）
+            List<ProductBundleRelationDO> tempRelations = 
+                bundleProductServiceHelper.createBundleRelations(updateReqVO.getId(), updateReqVO.getBundleItems());
+            
+            // 计算并设置成本价
+            BigDecimal calculatedCost = bundleProductServiceHelper.calculateBundleCostPrice(
+                updateObj.getBundleType(), 
+                updateObj.getCostPrice(), 
+                tempRelations
+            );
+            updateObj.setCostPrice(calculatedCost);
+        }
 
         replacePictureUrl(updateObj);
         productInfoMapper.updateById(updateObj);
@@ -125,6 +171,11 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         updateProductPurchaseList(updateReqVO.getId(), updateReqVO.getProductPurchases());
         updateSupplierPriceOfferList(updateReqVO.getId(), updateReqVO.getSupplierPriceOffers());
         updateProductCostList(updateReqVO.getId(), updateReqVO.getProductCosts());
+        
+        // ========== 更新组合产品关系（新增）==========
+        if (updateObj.getProductType() != null && updateObj.getProductType() == 1) {
+            updateBundleRelations(updateReqVO.getId(), updateReqVO.getBundleItems());
+        }
     }
 
     private void updateProductCostList(Long productId, List<ProductCostsDO> productCosts) {
@@ -184,7 +235,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
             if (productInfoDO == null) {
                 return null;
             }
-            productInfoDO.setCostPrice(getProductPurchasePrice(productInfoDO.getId()));
+//            productInfoDO.setCostPrice(getProductPurchasePrice(productInfoDO.getId()));
             replacePictureUrl(productInfoDO);
             return productInfoDO;
         });
@@ -197,29 +248,22 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         });
     }
 
-    //    @Override
-//    public List<ProductInfoDO> getProductInfoBySkuId(String skuId) {
-//
-//        return productInfoMapper.selectList(new LambdaQueryWrapperX<ProductInfoDO>()
-//                .likeIfPresent(ProductInfoDO::getSkuId, skuId));
-//    }
-
     @Override
     public PageResult<ProductInfoDO> getProductInfoPage(ProductInfoPageReqVO pageReqVO) {
         PageResult<ProductInfoDO> productInfoDOPageResult = productInfoMapper.selectPage(pageReqVO);
         List<ProductInfoDO> productInfoDOList = productInfoDOPageResult.getList();
-        if (CollectionUtils.isNotEmpty(productInfoDOList)) {
-
-            List<Long> productIds = convertList(productInfoDOList, ProductInfoDO::getId);
-            Map<Long, SupplierPriceOfferDO> priceMap = getDefaultSupplierPriceOfferMap(productIds);
-            for (ProductInfoDO productInfo : productInfoDOList) {
-                replacePictureUrl(productInfo);
-
-                Long productId = productInfo.getId();
-                SupplierPriceOfferDO supplierPriceOfferDO = priceMap.get(productId);
-                productInfo.setCostPrice(supplierPriceOfferDO == null ? BigDecimal.ZERO : supplierPriceOfferDO.getPrice());
-            }
-        }
+//        if (CollectionUtils.isNotEmpty(productInfoDOList)) {
+//
+//            List<Long> productIds = convertList(productInfoDOList, ProductInfoDO::getId);
+//            Map<Long, SupplierPriceOfferDO> priceMap = getDefaultSupplierPriceOfferMap(productIds);
+//            for (ProductInfoDO productInfo : productInfoDOList) {
+//                replacePictureUrl(productInfo);
+//
+//                Long productId = productInfo.getId();
+//                SupplierPriceOfferDO supplierPriceOfferDO = priceMap.get(productId);
+//                productInfo.setCostPrice(supplierPriceOfferDO == null ? BigDecimal.ZERO : supplierPriceOfferDO.getPrice());
+//            }
+//        }
 
         productInfoDOPageResult.setList(productInfoDOList);
         return productInfoDOPageResult;
@@ -541,6 +585,42 @@ public class ProductInfoServiceImpl implements ProductInfoService {
                 throw exception(PRODUCT_INFO_SKU_EXISTS);
             }
         });
+    }
+    
+    // ==================== 组合产品相关方法（新增）====================
+    
+    @Override
+    public List<ProductBundleRelationDO> getBundleRelations(Long bundleProductId) {
+        return bundleRelationMapper.selectListByBundleProductId(bundleProductId);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void recalculateBundleCostPrice(Long bundleProductId) {
+        bundleProductServiceHelper.recalculateBundleCostPrice(bundleProductId);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchRecalculateBundleCostPrice() {
+        bundleProductServiceHelper.batchRecalculateBundleCostPrice();
+    }
+    
+    /**
+     * 更新组合产品关系
+     */
+    private void updateBundleRelations(Long bundleProductId, List<ProductBundleItemReqVO> itemReqVOs) {
+        // 1. 删除旧关系
+        bundleRelationMapper.deleteByBundleProductId(bundleProductId);
+        
+        // 2. 插入新关系
+        if (CollectionUtils.isNotEmpty(itemReqVOs)) {
+            List<ProductBundleRelationDO> relations = 
+                bundleProductServiceHelper.createBundleRelations(bundleProductId, itemReqVOs);
+            for (ProductBundleRelationDO relation : relations) {
+                bundleRelationMapper.insert(relation);
+            }
+        }
     }
 
 }

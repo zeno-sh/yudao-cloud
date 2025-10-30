@@ -97,5 +97,24 @@ public class ProductInfoDO extends BaseDO {
      * 枚举 {@link TODO dm_platform 对应的类}
      */
     private Integer platform;
+    
+    // ========== 组合产品相关字段（新增）==========
+    
+    /**
+     * 产品类型：0=普通产品 1=组合产品
+     */
+    private Integer productType;
+    
+    /**
+     * 组合类型：1=自定义成本价 2=自动累计成本价
+     * （仅当 productType=1 时有效）
+     * 
+     * 说明：
+     * - bundleType=1: 自定义模式，cost_price 由用户手动设置，不随子产品成本变化
+     * - bundleType=2: 自动累计模式，cost_price 自动计算（子产品成本之和）
+     */
+    private Integer bundleType;
+    
+    // 注意：cost_price 字段复用，存储最终成本价（无论是自定义还是自动计算）
 
 }

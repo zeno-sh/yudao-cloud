@@ -15,6 +15,15 @@ public interface ErrorCodeConstants {
     ErrorCode PRODUCT_INFO_TRANSPORT_EXISTS = new ErrorCode(2_001_001_004, "存在发货记录，不可以删除");
     ErrorCode PRODUCT_INFO_SKU_EXISTS = new ErrorCode(2_001_001_005, "已存在相同的Sku");
     ErrorCode PRODUCT_COSTS_NOT_EXISTS = new ErrorCode(2_001_001_006, "产品成本结构不存在");
+    
+    // ========== 组合产品相关错误码（新增）==========
+    ErrorCode BUNDLE_TYPE_REQUIRED = new ErrorCode(2_001_001_100, "组合产品必须指定组合类型");
+    ErrorCode COST_PRICE_REQUIRED = new ErrorCode(2_001_001_101, "自定义成本价模式时，成本价不能为空");
+    ErrorCode BUNDLE_ITEMS_REQUIRED = new ErrorCode(2_001_001_102, "组合产品明细列表不能为空");
+    ErrorCode SUB_PRODUCT_NOT_EXISTS = new ErrorCode(2_001_001_103, "子产品ID[{}]不存在");
+    ErrorCode BUNDLE_PRODUCT_CANNOT_NEST = new ErrorCode(2_001_001_104, "组合产品不能嵌套，子产品不能是组合产品");
+    ErrorCode PRODUCT_NOT_BUNDLE = new ErrorCode(2_001_001_105, "该产品不是组合产品");
+    ErrorCode BUNDLE_PRODUCT_NOT_EXISTS = new ErrorCode(2_001_001_106, "组合产品不存在");
 
     // ========== 类目佣金 模块 2-001-002-000 ==========
     ErrorCode CATEGORY_COMMISSION_NOT_EXISTS = new ErrorCode(2_001_002_000, "类目佣金不存在");
