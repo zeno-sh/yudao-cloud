@@ -13,10 +13,7 @@ import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserSaveReqV
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import javax.validation.Valid;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 后台用户 Service 接口
@@ -214,4 +211,19 @@ public interface AdminUserService {
      */
     boolean isPasswordMatch(String rawPassword, String encodedPassword);
 
+    /**
+     * 更新用户授权门店
+     *
+     * @param userId
+     * @param shopIds
+     */
+    void updateUserAssignShop(Long userId, Set<Long> shopIds);
+
+    /**
+     * 更新用户授权产品
+     *
+     * @param userId
+     * @param productIds
+     */
+    void updateUserAssignProduct(Long userId, Set<Long> productIds);
 }

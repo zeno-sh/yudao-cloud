@@ -530,4 +530,23 @@ public class AdminUserServiceImpl implements AdminUserService {
         return passwordEncoder.encode(password);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+            success = SYSTEM_USER_UPDATE_SUCCESS)
+    public void updateUserAssignShop(Long userId, Set<Long> shopIds) {
+        if (CollectionUtil.isNotEmpty(shopIds)) {
+            userMapper.updateById(new AdminUserDO().setId(userId).setShopIds(shopIds));
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_UPDATE_SUB_TYPE, bizNo = "{{#userId}}",
+            success = SYSTEM_USER_UPDATE_SUCCESS)
+    public void updateUserAssignProduct(Long userId, Set<Long> productIds) {
+        if (CollectionUtil.isNotEmpty(productIds)) {
+            userMapper.updateById(new AdminUserDO().setId(userId).setProductIds(productIds));
+        }
+    }
 }

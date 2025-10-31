@@ -20,6 +20,7 @@ public class DataPermissionConfiguration {
             // dept
             rule.addDeptColumn(AdminUserDO.class);
             rule.addDeptColumn(DeptDO.class, "id");
+
             // user
             rule.addUserColumn(AdminUserDO.class, "id");
         };

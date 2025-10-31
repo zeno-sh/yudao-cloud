@@ -14,7 +14,7 @@
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>
 
     <properties>
-        <revision>2025.10-jdk8-SNAPSHOT</revision>
+        <revision>1.0.0-SNAPSHOT</revision>
         <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
         <!-- 统一依赖管理 -->
         <spring.framework.version>5.3.39</spring.framework.version>
@@ -763,5 +763,40 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- 使用 CNB / huawei / aliyun 的 Maven 源,提升下载速度 -->
+    <repositories>
+        <!-- CNB 私有仓库,用于拉取内部依赖 -->
+        <repository>
+            <id>shiteng-dev-java-springboot-jar-maven</id>
+            <name>shiteng-dev-java-springboot-jar-maven</name>
+            <url>https://maven.cnb.cool/shiteng-dev/java-springboot-jar-maven/-/packages/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <!-- SNAPSHOT 版本每次构建都检查更新 -->
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>huaweicloud</id>
+            <name>huawei</name>
+            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
+        </repository>
+        <repository>
+            <id>aliyunmaven</id>
+            <name>aliyun</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </repository>
+    </repositories>
+
+    <!-- 统一配置发布仓库 -->
+    <distributionManagement>
+        <repository>
+            <!-- 须与 settings.xml 中 server 的 id 一致 -->
+            <id>shiteng-dev-java-springboot-jar-maven</id>
+            <name>shiteng-dev-java-springboot-jar-maven</name>
+            <url>https://maven.cnb.cool/shiteng-dev/java-springboot-jar-maven/-/packages/</url>
+        </repository>
+    </distributionManagement>
 
 </project>

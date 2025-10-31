@@ -20,8 +20,12 @@ import com.github.yulichang.interfaces.MPJBaseJoin;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 在 MyBatis Plus 的 BaseMapper 的基础上拓展，提供更多的能力
@@ -221,6 +225,44 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
             return 0;
         }
         return delete(new LambdaQueryWrapper<T>().in(field, values));
+    }
+
+    default <E> void updateEntityList(MPJBaseMapper<E> mapper, List<E> existList,
+                                      List<E> newList, Function<E, Long> getIdFunction) {
+
+        // 确保现有列表不为空
+        if (existList.isEmpty()) {
+            existList = new ArrayList<>();
+        }
+
+        // 创建现有项的 Map (ID -> 实体)
+        Map<Long, E> existMap = existList.stream()
+                .collect(Collectors.toMap(getIdFunction, Function.identity()));
+
+        // 创建新的项的 Map (ID -> 实体)
+        Map<Long, E> newMap = newList.stream()
+                .filter(item -> getIdFunction.apply(item) != null)
+                .collect(Collectors.toMap(getIdFunction, Function.identity()));
+
+        // 更新和新增逻辑
+        for (E newItem : newList) {
+            Long id = getIdFunction.apply(newItem);
+            if (id != null && existMap.containsKey(id)) {
+                // 更新已有项
+                mapper.updateById(newItem);
+            } else {
+                // 新增项
+                mapper.insert(newItem);
+            }
+        }
+
+        // 删除逻辑：找到 existList 中有但 newList 中没有的项，执行删除
+        for (E existItem : existList) {
+            Long id = getIdFunction.apply(existItem);
+            if (!newMap.containsKey(id)) {
+                mapper.deleteById(id);
+            }
+        }
     }
 
 }

@@ -1,15 +1,20 @@
 package cn.iocoder.yudao.framework.excel.core.util;
 
+import cn.idev.excel.EasyExcel;
 import cn.idev.excel.FastExcelFactory;
 import cn.idev.excel.converters.longconverter.LongStringConverter;
 import cn.idev.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.excel.core.handler.ColumnWidthMatchStyleStrategy;
+import cn.iocoder.yudao.framework.excel.core.handler.DynamicHeaderWriteHandler;
 import cn.iocoder.yudao.framework.excel.core.handler.SelectSheetWriteHandler;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -48,6 +53,22 @@ public class ExcelUtils {
         return FastExcelFactory.read(file.getInputStream(), head, null)
                 .autoCloseStream(false)  // 不要自动关闭，交给 Servlet 自己处理
                 .doReadAllSync();
+    }
+
+    public static <T> void write(HttpServletResponse response, String filename, String sheetName,
+                                 Class<T> head, List<T> data, LinkedHashMap<String, String> headerMap) throws IOException {
+        // 输出 Excel
+        EasyExcel.write(response.getOutputStream(), head)
+                .autoCloseStream(false) // 不要自动关闭，交给 Servlet 自己处理
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy()) // 基于 column 长度，自动适配。最大 255 宽度
+                .registerWriteHandler(new DynamicHeaderWriteHandler(headerMap))
+                .registerConverter(new LongStringConverter()) // 避免 Long 类型丢失精度
+                .useDefaultStyle(true)
+                .relativeHeadRowIndex(5)
+                .sheet(sheetName).doWrite(data);
+        // 设置 header 和 contentType。写在最后的原因是，避免报错时，响应 contentType 已经被修改了
+        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(filename, StandardCharsets.UTF_8.name()));
+        response.setContentType("application/vnd.ms-excel;charset=UTF-8");
     }
 
 }

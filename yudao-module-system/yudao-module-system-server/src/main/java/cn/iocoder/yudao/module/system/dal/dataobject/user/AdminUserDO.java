@@ -92,5 +92,14 @@ public class AdminUserDO extends TenantBaseDO {
      * 最后登录时间
      */
     private LocalDateTime loginDate;
-
+    /**
+     * 门店数组
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private Set<Long> shopIds;
+    /**
+     * 商品数组
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private Set<Long> productIds;
 }
