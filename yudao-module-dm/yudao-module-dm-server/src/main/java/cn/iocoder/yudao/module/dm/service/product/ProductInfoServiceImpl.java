@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.service.product;
 
+import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.datapermission.core.util.DataPermissionUtils;
 import cn.iocoder.yudao.module.dm.dal.dataobject.plan.ProductSelectionPlanDO;
@@ -92,6 +93,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         
         // 插入
         ProductInfoDO productInfo = BeanUtils.toBean(createReqVO, ProductInfoDO.class);
+        replacePictureUrl(productInfo);
         
         // ========== 组合产品成本价计算（新增）==========
         if (productInfo.getProductType() != null && productInfo.getProductType() == 1) {
@@ -319,11 +321,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
 
     private void replacePictureUrl(ProductInfoDO productInfo) {
         String pictureUrl = productInfo.getPictureUrl();
-        String filePath = configApi.getConfigValueByKey("image_url_repleace").getCheckedData();
-        if (StringUtils.isNotBlank(filePath) && pictureUrl.contains("/profile/upload/")) {
-            String newUrl = pictureUrl.replace("/profile/upload/", filePath);
-            productInfo.setPictureUrl(newUrl);
-        }
+        productInfo.setPictureUrl(HttpUtils.removeUrlQuery(pictureUrl));
     }
 
     @Override

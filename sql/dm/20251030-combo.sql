@@ -32,7 +32,6 @@ CREATE TABLE `dm_product_bundle_relation`
     `deleted`           bit(1) NOT NULL                    DEFAULT b'0' COMMENT '是否删除',
     `tenant_id`         bigint                             DEFAULT '0' COMMENT '租户ID',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_bundle_sub` (`bundle_product_id`,`sub_product_id`,`deleted`),
     KEY                 `idx_bundle_product` (`bundle_product_id`,`deleted`),
     KEY                 `idx_sub_product` (`sub_product_id`),
     KEY                 `idx_tenant` (`tenant_id`,`deleted`)
