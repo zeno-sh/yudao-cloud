@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.dm.service.report;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportQueryReqVO;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportRespVO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductInfoDO;
@@ -335,9 +336,17 @@ public class SkuReportServiceImpl implements SkuReportService {
 
         // 基础信息
         vo.setProductId(product.getId());
-        vo.setProductName(product.getSkuName());
         vo.setSku(product.getSkuId());
         vo.setPlatformSkuId(""); // TODO: 需要补充平台关联信息逻辑
+        
+        // 构建产品简单信息
+        ProductSimpleInfoVO productSimpleInfo = new ProductSimpleInfoVO();
+        productSimpleInfo.setProductId(product.getId());
+        productSimpleInfo.setSkuId(product.getSkuId());
+        productSimpleInfo.setSkuName(product.getSkuName());
+        productSimpleInfo.setImage(product.getPictureUrl());
+        productSimpleInfo.setProductType(product.getProductType());
+        vo.setProductSimpleInfo(productSimpleInfo);
 
         // 获取该产品的各仓库库存Map（已经按仓库代码统计好的）
         Map<String, Integer> warehouseInventoryMap = inventoryMap.getOrDefault(
@@ -378,6 +387,18 @@ public class SkuReportServiceImpl implements SkuReportService {
                 Collections.emptyMap()
         );
         vo.setPlatformSalesMap(platformSalesMap);
+        
+        // 计算平台合计日销量：各平台日销量之和除以平台数量
+        if (!platformSalesMap.isEmpty()) {
+            double totalPlatformSales = platformSalesMap.values().stream()
+                    .mapToDouble(Double::doubleValue)
+                    .sum();
+            double avgPlatformSales = totalPlatformSales / platformSalesMap.size();
+            // 保留2位小数
+            vo.setPlatformAvgDailySales(Math.round(avgPlatformSales * 100.0) / 100.0);
+        } else {
+            vo.setPlatformAvgDailySales(0.0);
+        }
         
         // 设置统计天数
         vo.setDays(days);

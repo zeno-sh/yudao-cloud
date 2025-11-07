@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.dm.controller.admin.report.vo;
 
 import cn.idev.excel.annotation.ExcelProperty;
+import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -21,9 +22,8 @@ public class SkuReportRespVO {
     @ExcelProperty("产品ID")
     private Long productId;
     
-    @Schema(description = "产品名", example = "折叠盒4FT")
-    @ExcelProperty("产品名")
-    private String productName;
+    @Schema(description = "产品简单信息")
+    private ProductSimpleInfoVO productSimpleInfo;
     
     @Schema(description = "SKU", example = "ABC-111")
     @ExcelProperty("SKU")
@@ -70,6 +70,10 @@ public class SkuReportRespVO {
     
     @Schema(description = "各平台日均销量统计 Map<平台ID, 日均销量>", example = "{1: 15.5, 2: 20.8}")
     private Map<Integer, Double> platformSalesMap;
+    
+    @Schema(description = "平台合计日销量(各平台日销量之和除以平台数量)", example = "18.15")
+    @ExcelProperty("平台合计日销量")
+    private Double platformAvgDailySales;
     
     @Schema(description = "各仓库日均销量统计 Map<仓库代码, 日均销量>", example = "{\"US-SOUTH\": 10.5, \"US-WEST\": 5.2}")
     private Map<String, Double> warehouseSalesMap;
