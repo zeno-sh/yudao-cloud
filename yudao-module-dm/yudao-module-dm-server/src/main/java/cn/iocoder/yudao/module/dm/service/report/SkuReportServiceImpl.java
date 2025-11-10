@@ -86,7 +86,7 @@ public class SkuReportServiceImpl implements SkuReportService {
         // 获取所有需要查询库存的产品ID（包括组合产品的子产品）
         List<Long> allInventoryProductIds = getAllInventoryProductIds(productIds);
 
-        CompletableFuture<Map<Long, Map<String, Integer>>> inventoryFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<InventoryData> inventoryFuture = CompletableFuture.supplyAsync(
                 () -> queryWarehouseInventory(allInventoryProductIds)
         );
 
@@ -123,10 +123,14 @@ public class SkuReportServiceImpl implements SkuReportService {
         Map<Long, List<WarehouseSalesDTO>> expandedWarehouseSalesByProductMap = expandedWarehouseSalesFuture.join();
         Map<Long, Map<Integer, Double>> platformSalesByProductIdMap = platformSalesFuture.join();
         Map<Long, Map<Integer, Double>> expandedPlatformSalesByProductIdMap = expandedPlatformSalesFuture.join();
-        Map<Long, Map<String, Integer>> inventoryMap = inventoryFuture.join();
+        InventoryData inventoryData = inventoryFuture.join();
+        
+        Map<Long, Map<String, Integer>> availableInventoryMap = inventoryData.getAvailableInventoryMap();
+        Map<Long, Map<String, Integer>> inboundInventoryMap = inventoryData.getInboundInventoryMap();
 
-        // 7. 处理组合产品：计算组合产品的可组合库存
-        Map<Long, Map<String, Integer>> bundleInventoryMap = calculateBundleInventory(products, inventoryMap);
+        // 7. 处理组合产品：计算组合产品的可组合库存（可用库存和在途库存都需要计算）
+        Map<Long, Map<String, Integer>> bundleAvailableInventoryMap = calculateBundleInventory(products, availableInventoryMap);
+        Map<Long, Map<String, Integer>> bundleInboundInventoryMap = calculateBundleInventory(products, inboundInventoryMap);
 
         // 8. 计算天数
         int days = calculateDays(reqVO.getStartTime(), reqVO.getEndTime());
@@ -146,7 +150,8 @@ public class SkuReportServiceImpl implements SkuReportService {
                             ? platformSalesByProductIdMap 
                             : expandedPlatformSalesByProductIdMap;
                     
-                    return buildSkuReport(product, warehouseSales, platformSales, bundleInventoryMap, days);
+                    return buildSkuReport(product, warehouseSales, platformSales, 
+                            bundleAvailableInventoryMap, bundleInboundInventoryMap, days);
                 })
                 .collect(Collectors.toList());
 
@@ -350,19 +355,19 @@ public class SkuReportServiceImpl implements SkuReportService {
     }
 
     /**
-     * 查询海外仓库存，并按产品ID和仓库代码统计库存数量
+     * 查询海外仓库存，并按产品ID和仓库代码统计库存数量（包括可用库存和在途库存）
      *
      * @param productIds 产品ID列表
-     * @return Map<产品ID, Map<仓库代码, 库存数量>>
+     * @return InventoryData 包含可用库存和在途库存的数据
      */
-    private Map<Long, Map<String, Integer>> queryWarehouseInventory(List<Long> productIds) {
+    private InventoryData queryWarehouseInventory(List<Long> productIds) {
         try {
             CommonResult<List<InventoryDTO>> result =
                     warehouseInventoryApi.batchGetInventoryByLocalProductIds(productIds);
 
             if (result != null && result.getData() != null) {
-                // 按产品ID分组，然后按仓库代码统计库存数量
-                Map<Long, Map<String, Integer>> inventoryMap = result.getData().stream()
+                // 按产品ID分组，然后按仓库代码统计可用库存数量
+                Map<Long, Map<String, Integer>> availableInventoryMap = result.getData().stream()
                         .filter(inv -> inv.getLocalProductId() != null)
                         .filter(inv -> StrUtil.isNotBlank(inv.getWarehouseCode()))
                         .collect(Collectors.groupingBy(
@@ -373,12 +378,24 @@ public class SkuReportServiceImpl implements SkuReportService {
                                 )
                         ));
                 
-                return inventoryMap;
+                // 按产品ID分组，然后按仓库代码统计在途库存数量
+                Map<Long, Map<String, Integer>> inboundInventoryMap = result.getData().stream()
+                        .filter(inv -> inv.getLocalProductId() != null)
+                        .filter(inv -> StrUtil.isNotBlank(inv.getWarehouseCode()))
+                        .collect(Collectors.groupingBy(
+                                InventoryDTO::getLocalProductId,
+                                Collectors.groupingBy(
+                                        InventoryDTO::getWarehouseCode,
+                                        Collectors.summingInt(inv -> inv.getInboundQty() != null ? inv.getInboundQty() : 0)
+                                )
+                        ));
+                
+                return new InventoryData(availableInventoryMap, inboundInventoryMap);
             }
         } catch (Exception e) {
             log.error("查询海外仓库存失败", e);
         }
-        return Collections.emptyMap();
+        return new InventoryData(Collections.emptyMap(), Collections.emptyMap());
     }
 
     /**
@@ -388,7 +405,8 @@ public class SkuReportServiceImpl implements SkuReportService {
             ProductInfoDO product,
             Map<Long, List<WarehouseSalesDTO>> warehouseSalesByProductMap,
             Map<Long, Map<Integer, Double>> platformSalesByProductIdMap,
-            Map<Long, Map<String, Integer>> inventoryMap,
+            Map<Long, Map<String, Integer>> availableInventoryMap,
+            Map<Long, Map<String, Integer>> inboundInventoryMap,
             int days) {
 
         SkuReportRespVO vo = new SkuReportRespVO();
@@ -407,8 +425,8 @@ public class SkuReportServiceImpl implements SkuReportService {
         productSimpleInfo.setProductType(product.getProductType());
         vo.setProductSimpleInfo(productSimpleInfo);
 
-        // 获取该产品的各仓库库存Map（已经按仓库代码统计好的）
-        Map<String, Integer> warehouseInventoryMap = inventoryMap.getOrDefault(
+        // 获取该产品的各仓库可用库存Map（已经按仓库代码统计好的）
+        Map<String, Integer> warehouseInventoryMap = availableInventoryMap.getOrDefault(
                 product.getId(),
                 Collections.emptyMap()
         );
@@ -421,6 +439,21 @@ public class SkuReportServiceImpl implements SkuReportService {
                 .mapToInt(Integer::intValue)
                 .sum();
         vo.setOverseasTotalQty(overseasTotal);
+        
+        // 获取该产品的各仓库在途库存Map
+        Map<String, Integer> warehouseInboundMap = inboundInventoryMap.getOrDefault(
+                product.getId(),
+                Collections.emptyMap()
+        );
+        
+        // 设置各仓库在途库存Map
+        vo.setWarehouseInboundMap(warehouseInboundMap);
+        
+        // 海外仓在途总库存
+        int overseasInbound = warehouseInboundMap.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        vo.setOverseasInboundQty(overseasInbound);
 
         // TODO: FBA库存需要从其他地方获取
         vo.setFbaAvailableQty(0);
@@ -478,10 +511,17 @@ public class SkuReportServiceImpl implements SkuReportService {
                 .sum();
 
         // 可销售天数 = 总库存 / 日均销量
-        // 如果日均销量为0，则显示最大值90天
+        // 如果日均销量为0，则设置为0
         if (totalSales > 0) {
             int availableDays = (int) (vo.getTotalQty() / totalSales);
             vo.setAvailableDays(availableDays);
+            
+            // 在途可销售天数 = 在途总库存 / 日均销量
+            int inboundAvailableDays = (int) (vo.getOverseasInboundQty() / totalSales);
+            vo.setInboundAvailableDays(inboundAvailableDays);
+        } else {
+            vo.setAvailableDays(0);
+            vo.setInboundAvailableDays(0);
         }
     }
 
@@ -523,6 +563,10 @@ public class SkuReportServiceImpl implements SkuReportService {
                 comparator = Comparator.comparing(SkuReportRespVO::getOverseasTotalQty,
                         Comparator.nullsLast(Integer::compareTo));
                 break;
+            case "overseasInboundQty":
+                comparator = Comparator.comparing(SkuReportRespVO::getOverseasInboundQty,
+                        Comparator.nullsLast(Integer::compareTo));
+                break;
             case "totalQty":
                 comparator = Comparator.comparing(SkuReportRespVO::getTotalQty,
                         Comparator.nullsLast(Integer::compareTo));
@@ -533,6 +577,10 @@ public class SkuReportServiceImpl implements SkuReportService {
                 break;
             case "availableDays":
                 comparator = Comparator.comparing(SkuReportRespVO::getAvailableDays,
+                        Comparator.nullsLast(Integer::compareTo));
+                break;
+            case "inboundAvailableDays":
+                comparator = Comparator.comparing(SkuReportRespVO::getInboundAvailableDays,
                         Comparator.nullsLast(Integer::compareTo));
                 break;
             case "sku":
@@ -826,5 +874,29 @@ public class SkuReportServiceImpl implements SkuReportService {
         }
 
         return minCanBundleQty == Integer.MAX_VALUE ? 0 : minCanBundleQty;
+    }
+    
+    /**
+     * 库存数据包装类，同时包含可用库存和在途库存
+     */
+    private static class InventoryData {
+        // Map<产品ID, Map<仓库代码, 可用库存数量>>
+        private Map<Long, Map<String, Integer>> availableInventoryMap;
+        // Map<产品ID, Map<仓库代码, 在途库存数量>>
+        private Map<Long, Map<String, Integer>> inboundInventoryMap;
+        
+        public InventoryData(Map<Long, Map<String, Integer>> availableInventoryMap,
+                           Map<Long, Map<String, Integer>> inboundInventoryMap) {
+            this.availableInventoryMap = availableInventoryMap;
+            this.inboundInventoryMap = inboundInventoryMap;
+        }
+        
+        public Map<Long, Map<String, Integer>> getAvailableInventoryMap() {
+            return availableInventoryMap;
+        }
+        
+        public Map<Long, Map<String, Integer>> getInboundInventoryMap() {
+            return inboundInventoryMap;
+        }
     }
 }

@@ -48,11 +48,18 @@ public class SkuReportRespVO {
     @Schema(description = "各仓库库存 Map<仓库代码, 库存数量>", example = "{\"US-SOUTH\": 100, \"US-WEST\": 100, \"US-EAST\": 100}")
     private Map<String, Integer> warehouseInventoryMap;
     
+    @Schema(description = "各仓库在途库存 Map<仓库代码, 在途数量>", example = "{\"US-SOUTH\": 50, \"US-WEST\": 30}")
+    private Map<String, Integer> warehouseInboundMap;
+    
     // ========== 统计信息 ==========
     
     @Schema(description = "海外仓总库存", example = "400")
     @ExcelProperty("总库存")
     private Integer overseasTotalQty;
+    
+    @Schema(description = "海外仓在途总库存", example = "80")
+    @ExcelProperty("在途总库存")
+    private Integer overseasInboundQty;
     
     @Schema(description = "总库存(海外仓 + FBA)", example = "800")
     @ExcelProperty("库存可销售天")
@@ -61,6 +68,10 @@ public class SkuReportRespVO {
     @Schema(description = "库存可销售天数(最大显示90)", example = "134")
     @ExcelProperty("库存可销售天数")
     private Integer availableDays;
+    
+    @Schema(description = "在途可销售天数", example = "20")
+    @ExcelProperty("在途可销售天数")
+    private Integer inboundAvailableDays;
     
     @Schema(description = "统计天数", example = "7")
     @ExcelProperty("统计天数")
