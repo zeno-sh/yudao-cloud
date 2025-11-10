@@ -3,6 +3,8 @@ package cn.iocoder.yudao.module.dm.service.report;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.pojo.SortingField;
 import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportQueryReqVO;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportRespVO;
@@ -48,7 +50,19 @@ public class SkuReportServiceImpl implements SkuReportService {
     private WarehouseInventoryApi warehouseInventoryApi;
 
     @Override
-    public List<SkuReportRespVO> querySkuReport(SkuReportQueryReqVO reqVO) {
+    public PageResult<SkuReportRespVO> querySkuReport(SkuReportQueryReqVO reqVO) {
+        // 1. 查询全部数据
+        List<SkuReportRespVO> allData = querySkuReportList(reqVO);
+        
+        // 2. 排序
+        List<SkuReportRespVO> sortedData = sortSkuReportList(allData, reqVO.getSortingFields());
+        
+        // 3. 分页
+        return pageSkuReportList(sortedData, reqVO.getPageNo(), reqVO.getPageSize());
+    }
+
+    @Override
+    public List<SkuReportRespVO> querySkuReportList(SkuReportQueryReqVO reqVO) {
         // 1. 查询产品基础信息
         List<ProductInfoDO> products = queryProducts(reqVO);
         if (CollUtil.isEmpty(products)) {
@@ -422,9 +436,100 @@ public class SkuReportServiceImpl implements SkuReportService {
         // 如果日均销量为0，则显示最大值90天
         if (totalSales > 0) {
             int availableDays = (int) (vo.getTotalQty() / totalSales);
-            vo.setAvailableDays(Math.min(availableDays, 90)); // 最大显示90天
-        } else {
-            vo.setAvailableDays(90);
+            vo.setAvailableDays(availableDays);
         }
+    }
+
+    /**
+     * 对SKU报表数据进行排序
+     */
+    private List<SkuReportRespVO> sortSkuReportList(List<SkuReportRespVO> list, List<SortingField> sortingFields) {
+        if (CollUtil.isEmpty(list) || CollUtil.isEmpty(sortingFields)) {
+            return list;
+        }
+
+        // 使用Java 8 Stream进行多字段排序
+        Comparator<SkuReportRespVO> comparator = null;
+        
+        for (SortingField sortingField : sortingFields) {
+            Comparator<SkuReportRespVO> fieldComparator = getComparator(sortingField.getField(), sortingField.getOrder());
+            if (fieldComparator != null) {
+                comparator = (comparator == null) ? fieldComparator : comparator.thenComparing(fieldComparator);
+            }
+        }
+        
+        if (comparator != null) {
+            return list.stream().sorted(comparator).collect(Collectors.toList());
+        }
+        
+        return list;
+    }
+
+    /**
+     * 根据字段名和排序方向获取比较器
+     */
+    private Comparator<SkuReportRespVO> getComparator(String field, String order) {
+        boolean isAsc = SortingField.ORDER_ASC.equals(order);
+        
+        Comparator<SkuReportRespVO> comparator = null;
+        
+        switch (field) {
+            case "overseasTotalQty":
+                comparator = Comparator.comparing(SkuReportRespVO::getOverseasTotalQty, 
+                        Comparator.nullsLast(Integer::compareTo));
+                break;
+            case "totalQty":
+                comparator = Comparator.comparing(SkuReportRespVO::getTotalQty, 
+                        Comparator.nullsLast(Integer::compareTo));
+                break;
+            case "platformAvgDailySales":
+                comparator = Comparator.comparing(SkuReportRespVO::getPlatformAvgDailySales, 
+                        Comparator.nullsLast(Double::compareTo));
+                break;
+            case "availableDays":
+                comparator = Comparator.comparing(SkuReportRespVO::getAvailableDays, 
+                        Comparator.nullsLast(Integer::compareTo));
+                break;
+            case "sku":
+                comparator = Comparator.comparing(SkuReportRespVO::getSku, 
+                        Comparator.nullsLast(String::compareTo));
+                break;
+            case "productId":
+                comparator = Comparator.comparing(SkuReportRespVO::getProductId, 
+                        Comparator.nullsLast(Long::compareTo));
+                break;
+            default:
+                log.warn("不支持的排序字段: {}", field);
+                return null;
+        }
+        
+        // 如果是降序,反转比较器
+        return isAsc ? comparator : comparator.reversed();
+    }
+
+    /**
+     * 对SKU报表数据进行内存分页
+     */
+    private PageResult<SkuReportRespVO> pageSkuReportList(List<SkuReportRespVO> list, Integer pageNo, Integer pageSize) {
+        if (CollUtil.isEmpty(list)) {
+            return PageResult.empty();
+        }
+        
+        // 计算总数
+        long total = list.size();
+        
+        // 计算分页起始位置
+        int start = (pageNo - 1) * pageSize;
+        if (start >= total) {
+            return new PageResult<>(Collections.emptyList(), total);
+        }
+        
+        // 计算分页结束位置
+        int end = Math.min(start + pageSize, (int) total);
+        
+        // 截取分页数据
+        List<SkuReportRespVO> pageData = list.subList(start, end);
+        
+        return new PageResult<>(pageData, total);
     }
 }

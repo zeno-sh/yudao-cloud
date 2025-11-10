@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.dm.controller.admin.report.vo;
 
+import cn.iocoder.yudao.framework.common.pojo.SortablePageParam;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +16,9 @@ import java.util.List;
  */
 @Schema(description = "管理后台 - SKU报表查询请求 VO")
 @Data
-public class SkuReportQueryReqVO {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class SkuReportQueryReqVO extends SortablePageParam {
     
     @Schema(description = "产品ID列表", example = "[1, 2, 3]")
     private List<Long> productIds;

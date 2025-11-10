@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.dm.controller.admin.report;
 
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportQueryReqVO;
 import cn.iocoder.yudao.module.dm.controller.admin.report.vo.SkuReportRespVO;
@@ -41,15 +42,15 @@ public class SkuReportController {
     @PostMapping("/query")
     @Operation(summary = "查询SKU报表")
     @PreAuthorize("@ss.hasPermission('dm:sku-report:query')")
-    public CommonResult<List<SkuReportRespVO>> querySkuReport(@Valid @RequestBody SkuReportQueryReqVO reqVO) {
+    public CommonResult<PageResult<SkuReportRespVO>> querySkuReport(@Valid @RequestBody SkuReportQueryReqVO reqVO) {
         // 设置默认时间：如果没有传时间，默认查询昨天结束往前7天
         if (reqVO.getStartTime() == null && reqVO.getEndTime() == null) {
             reqVO.setEndTime(LocalDate.now().minusDays(1));
             reqVO.setStartTime(reqVO.getEndTime().minusDays(6));
         }
         
-        List<SkuReportRespVO> list = skuReportService.querySkuReport(reqVO);
-        return success(list);
+        PageResult<SkuReportRespVO> pageResult = skuReportService.querySkuReport(reqVO);
+        return success(pageResult);
     }
 
     @PostMapping("/export")
@@ -64,7 +65,8 @@ public class SkuReportController {
             reqVO.setStartTime(reqVO.getEndTime().minusDays(6));
         }
         
-        List<SkuReportRespVO> list = skuReportService.querySkuReport(reqVO);
+        // 导出全部数据,不分页
+        List<SkuReportRespVO> list = skuReportService.querySkuReportList(reqVO);
         ExcelUtils.write(response, "SKU报表.xlsx", "SKU数据", SkuReportRespVO.class, list);
     }
 }
