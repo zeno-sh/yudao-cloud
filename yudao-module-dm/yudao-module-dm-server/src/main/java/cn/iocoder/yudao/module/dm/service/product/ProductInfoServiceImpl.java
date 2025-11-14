@@ -146,6 +146,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         
         // 更新
         ProductInfoDO updateObj = BeanUtils.toBean(updateReqVO, ProductInfoDO.class);
+        updateObj.clean();
         
         // ========== 组合产品成本价计算（新增）==========
         if (updateObj.getProductType() != null && updateObj.getProductType() == 1) {
@@ -180,7 +181,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     }
 
     private void updateProductCostList(Long productId, List<ProductCostsDO> productCosts) {
-        productCosts.forEach(o -> o.setProductId(productId));
+        productCosts.forEach(o -> {
+            o.setProductId(productId);
+            o.clean(); // 清空前端传递的 creator、updater 等字段，避免被错误更新
+        });
         List<ProductCostsDO> existList = productCostsMapper.selectList(ProductCostsDO::getProductId, productId);
         productCostsMapper.updateEntityList(productCostsMapper, existList, productCosts, ProductCostsDO::getId);
     }
@@ -365,7 +369,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
             return;
         }
         productCustoms.setProductId(productId);
-        productCustoms.setUpdater(null).setUpdateTime(null); // 解决更新情况下：updateTime 不更新
+        productCustoms.clean();
         productCustomsMapper.insertOrUpdate(productCustoms);
     }
 
@@ -391,7 +395,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     }
 
     private void updateProductPriceList(Long productId, List<ProductPriceDO> list) {
-        list.forEach(o -> o.setProductId(productId));
+        list.forEach(o -> {
+            o.setProductId(productId);
+            o.clean();
+        });
         List<ProductPriceDO> existList = productPriceMapper.selectListByProductId(productId);
         productPriceMapper.updateEntityList(productPriceMapper, existList, list, ProductPriceDO::getId);
     }
@@ -413,7 +420,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     }
 
     private void updateProductPlatformTrendList(Long productId, List<ProductPlatformTrendDO> list) {
-        list.forEach(o -> o.setProductId(productId));
+        list.forEach(o -> {
+            o.setProductId(productId);
+            o.clean();
+        });
         List<ProductPlatformTrendDO> existList = productPlatformTrendMapper.selectList(ProductPlatformTrendDO::getProductId, productId);
         productPlatformTrendMapper.updateEntityList(productPlatformTrendMapper, existList, list, ProductPlatformTrendDO::getId);
     }
@@ -459,7 +469,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     }
 
     private void updateProductPurchaseList(Long productId, List<ProductPurchaseDO> list) {
-        list.forEach(o -> o.setProductId(productId));
+        list.forEach(o -> {
+            o.setProductId(productId);
+            o.clean();
+        });
         List<ProductPurchaseDO> existList = productPurchaseMapper.selectListByProductId(productId);
         productPurchaseMapper.updateEntityList(productPurchaseMapper, existList, list, ProductPurchaseDO::getId);
     }
@@ -554,7 +567,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     }
 
     private void updateSupplierPriceOfferList(Long productId, List<SupplierPriceOfferDO> list) {
-        list.forEach(o -> o.setProductId(productId));
+        list.forEach(o -> {
+            o.setProductId(productId);
+            o.clean();
+        });
         List<SupplierPriceOfferDO> existList = supplierPriceOfferMapper.selectListByProductId(productId);
         supplierPriceOfferMapper.updateEntityList(supplierPriceOfferMapper, existList, list, SupplierPriceOfferDO::getId);
     }
@@ -565,7 +581,10 @@ public class ProductInfoServiceImpl implements ProductInfoService {
 
     private void createProductCostList(Long productId, List<ProductCostsDO> productCosts) {
         if (CollectionUtils.isNotEmpty(productCosts)) {
-            productCosts.forEach(o -> o.setProductId(productId));
+            productCosts.forEach(o -> {
+                o.setProductId(productId);
+                o.clean(); // 清空前端传递的 creator、updater 等字段，避免被错误更新
+            });
             productCostsMapper.insertBatch(productCosts);
         }
     }
