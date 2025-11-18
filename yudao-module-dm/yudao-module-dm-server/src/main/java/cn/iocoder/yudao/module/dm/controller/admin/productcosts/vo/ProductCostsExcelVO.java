@@ -107,6 +107,19 @@ public class ProductCostsExcelVO {
     @ExcelProperty("海外仓")
     private String fbsWarehouseIds;
 
+    @ExcelProperty(value = "海外仓币种", converter = DictConvert.class)
+    @DictFormat("dm_currency_code")
+    @ExcelColumnSelect(dictType = "dm_currency_code")
+    private Integer fbsCurrency;
+
+    @ExcelProperty(value = "海外仓单位", converter = DictConvert.class)
+    @DictFormat("dm_fbs_unit_type")
+    @ExcelColumnSelect(dictType = "dm_fbs_unit_type")
+    private Integer fbsCostUnit;
+
+    @ExcelProperty("海外仓成本")
+    private BigDecimal fbsCost;
+
     @ExcelProperty(value = "平台成本币种", converter = DictConvert.class)
     @DictFormat("dm_currency_code")
     @ExcelColumnSelect(dictType = "dm_currency_code")

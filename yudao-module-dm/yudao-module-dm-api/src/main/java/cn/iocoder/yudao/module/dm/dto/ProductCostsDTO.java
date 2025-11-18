@@ -159,4 +159,19 @@ public class ProductCostsDTO implements Serializable {
      */
     private List<Long> fbsWarehouseIds;
 
+    /**
+     * 海外仓币种
+     */
+    private Integer fbsCurrency;
+
+    /**
+     * 海外仓单位
+     */
+    private Integer fbsCostUnit;
+
+    /**
+     * 海外仓成本
+     */
+    private BigDecimal fbsCost;
+
 } 

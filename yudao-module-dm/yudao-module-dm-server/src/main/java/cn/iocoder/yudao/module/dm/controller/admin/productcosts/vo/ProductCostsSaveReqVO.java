@@ -102,4 +102,13 @@ public class ProductCostsSaveReqVO {
     @Schema(description = "海外仓")
     private List<Long> fbsWarehouseIds;
 
+    @Schema(description = "海外仓币种")
+    private Integer fbsCurrency;
+
+    @Schema(description = "海外仓单位")
+    private Integer fbsCostUnit;
+
+    @Schema(description = "海外仓成本")
+    private BigDecimal fbsCost;
+
 }

@@ -138,4 +138,18 @@ public class ProductCostsRespVO {
     @ExcelProperty("海外仓")
     private Collection<Long> fbsWarehouseIds;
 
+    @Schema(description = "海外仓币种")
+    @ExcelProperty(value = "海外仓币种", converter = DictConvert.class)
+    @DictFormat("dm_currency_code")
+    private Integer fbsCurrency;
+
+    @Schema(description = "海外仓单位")
+    @ExcelProperty(value = "海外仓单位", converter = DictConvert.class)
+    @DictFormat("dm_fbs_unit_type")
+    private Integer fbsCostUnit;
+
+    @Schema(description = "海外仓成本")
+    @ExcelProperty("海外仓成本")
+    private BigDecimal fbsCost;
+
 }
