@@ -11,9 +11,11 @@ import cn.iocoder.yudao.module.dm.controller.admin.calculation.vo.ProfitCalculat
 import cn.iocoder.yudao.module.dm.controller.admin.calculation.vo.ProfitCalculationPageReqVO;
 import cn.iocoder.yudao.module.dm.controller.admin.calculation.vo.ProfitCalculationRespVO;
 import cn.iocoder.yudao.module.dm.controller.admin.calculation.vo.ProfitCalculationSaveReqVO;
+import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.calculation.ProfitCalculationDO;
 import cn.iocoder.yudao.module.dm.excel.ProfitCalculationExcelListener;
 import cn.iocoder.yudao.module.dm.service.calculation.ProfitCalculationService;
+import cn.iocoder.yudao.module.dm.service.product.ProductInfoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +43,9 @@ public class ProfitCalculationController {
 
     @Resource
     private ProfitCalculationService profitCalculationService;
+
+    @Resource
+    private ProductInfoService productInfoService;
 
     @PostMapping("/create")
     @Operation(summary = "创建利润预测")
@@ -80,7 +85,9 @@ public class ProfitCalculationController {
     @PreAuthorize("@ss.hasPermission('multiple.platform:profit-calculation:query')")
     public CommonResult<PageResult<ProfitCalculationRespVO>> getProfitCalculationPage(@Valid ProfitCalculationPageReqVO pageReqVO) {
         PageResult<ProfitCalculationDO> pageResult = profitCalculationService.getProfitCalculationPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, ProfitCalculationRespVO.class));
+        PageResult<ProfitCalculationRespVO> result = BeanUtils.toBean(pageResult, ProfitCalculationRespVO.class);
+        fillProductInfo(result.getList());
+        return success(result);
     }
 
     @GetMapping("/export-excel")
@@ -91,9 +98,10 @@ public class ProfitCalculationController {
               HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ProfitCalculationDO> list = profitCalculationService.getProfitCalculationPage(pageReqVO).getList();
+        List<ProfitCalculationRespVO> voList = BeanUtils.toBean(list, ProfitCalculationRespVO.class);
+        fillProductInfo(voList);
         // 导出 Excel
-        ExcelUtils.write(response, "利润预测.xls", "数据", ProfitCalculationRespVO.class,
-                        BeanUtils.toBean(list, ProfitCalculationRespVO.class));
+        ExcelUtils.write(response, "利润预测.xls", "数据", ProfitCalculationRespVO.class, voList);
     }
 
     @PostMapping("/import")
@@ -119,6 +127,42 @@ public class ProfitCalculationController {
     @Operation(summary = "获得导入利润预测模板")
     public void importTemplate(HttpServletResponse response) throws IOException {
         profitCalculationService.getImportTemplate(response);
+    }
+
+    /**
+     * 填充产品基本信息（sku、skuName）并设置序号
+     */
+    private void fillProductInfo(List<ProfitCalculationRespVO> voList) {
+        if (voList == null || voList.isEmpty()) {
+            return;
+        }
+
+        // 提取所有产品ID
+        List<Long> productIds = voList.stream()
+                .map(ProfitCalculationRespVO::getProductId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+
+        // 批量获取产品简单信息
+        Map<Long, ProductSimpleInfoVO> productInfoMap = productInfoService.batchQueryProductSimpleInfo(productIds);
+
+        // 填充产品信息和序号
+        for (int i = 0; i < voList.size(); i++) {
+            ProfitCalculationRespVO vo = voList.get(i);
+            // 设置序号（从1开始）
+            vo.setRowNum(i + 1);
+            
+            // 填充产品信息
+            Long productId = vo.getProductId();
+            if (productId != null) {
+                ProductSimpleInfoVO productInfo = productInfoMap.get(productId);
+                if (productInfo != null) {
+                    vo.setSku(productInfo.getSkuId());
+                    vo.setSkuName(productInfo.getSkuName());
+                }
+            }
+        }
     }
 
 }

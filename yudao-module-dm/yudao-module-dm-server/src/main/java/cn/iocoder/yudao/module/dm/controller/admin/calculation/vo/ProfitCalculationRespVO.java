@@ -2,6 +2,9 @@ package cn.iocoder.yudao.module.dm.controller.admin.calculation.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
+import cn.iocoder.yudao.framework.excel.core.annotations.ExcelColumnSelect;
+import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -13,29 +16,100 @@ import java.time.LocalDateTime;
 @ExcelIgnoreUnannotated
 public class ProfitCalculationRespVO {
 
-    @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED, example = "16777")
-    @ExcelProperty("主键")
-    private Long id;
-
-    @Schema(description = "本地产品ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "31633")
-    @ExcelProperty("本地产品ID")
-    private Long productId;
+    @Schema(description = "序号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @ExcelProperty("序号")
+    private Integer rowNum;
 
     @Schema(description = "选品计划名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "王五")
     @ExcelProperty("选品计划名称")
     private String planName;
 
-    @Schema(description = "平台", requiredMode = Schema.RequiredMode.REQUIRED)
-    @ExcelProperty("平台")
-    private Integer platform;
-
     @Schema(description = "国家", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("国家")
     private String country;
 
+    @Schema(description = "平台", requiredMode = Schema.RequiredMode.REQUIRED)
+    @ExcelProperty(value = "平台", converter = DictConvert.class)
+    @DictFormat("dm_platform")
+    private Integer platform;
+
+    @Schema(description = "币种代码")
+    @ExcelProperty("币种代码")
+    private String currencyCode;
+
+    @Schema(description = "汇率")
+    @ExcelProperty("汇率")
+    private BigDecimal exchangeRate;
+
+    @Schema(description = "本地产品ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "31633")
+    @ExcelProperty("本地产品ID")
+    private Long productId;
+
+    @Schema(description = "产品SKU")
+    @ExcelProperty("产品SKU")
+    private String sku;
+
+    @Schema(description = "产品名称")
+    @ExcelProperty("产品名称")
+    private String skuName;
+
+    @Schema(description = "毛利润")
+    @ExcelProperty("毛利润")
+    private BigDecimal grossProfit;
+
+    @Schema(description = "毛利率(%)")
+    @ExcelProperty("毛利率(%)")
+    private BigDecimal grossMargin;
+
+    @Schema(description = "投资回报率(%)")
+    @ExcelProperty("投资回报率(%)")
+    private BigDecimal roi;
+
+    @Schema(description = "净利润")
+    @ExcelProperty("净利润")
+    private BigDecimal netProfit;
+
     @Schema(description = "配置模板ID")
     @ExcelProperty("配置模板ID")
     private Long templateId;
+
+    // 基础产品信息
+    @Schema(description = "产品长度(cm)")
+    @ExcelProperty("产品长度(cm)")
+    private BigDecimal productLength;
+
+    @Schema(description = "产品宽度(cm)")
+    @ExcelProperty("产品宽度(cm)")
+    private BigDecimal productWidth;
+
+    @Schema(description = "产品高度(cm)")
+    @ExcelProperty("产品高度(cm)")
+    private BigDecimal productHeight;
+
+    @Schema(description = "产品重量(kg)")
+    @ExcelProperty("产品重量(kg)")
+    private BigDecimal productWeight;
+
+    // 计算中间结果
+    @Schema(description = "立方米")
+    @ExcelProperty("立方米")
+    private BigDecimal volumeM3;
+
+    @Schema(description = "计算重量")
+    @ExcelProperty("计算重量")
+    private BigDecimal calculateWeight;
+
+    @Schema(description = "计算体积")
+    @ExcelProperty("计算体积")
+    private BigDecimal calculateVolume;
+
+    @Schema(description = "实际体积")
+    @ExcelProperty("实际体积")
+    private BigDecimal actualVolume;
+
+    @Schema(description = "实际重量")
+    @ExcelProperty("实际重量")
+    private BigDecimal actualWeight;
     
     // 计算配置参数
     @Schema(description = "体积系数（立方米转重量）")
@@ -93,44 +167,11 @@ public class ProfitCalculationRespVO {
     @Schema(description = "海运单价")
     @ExcelProperty("海运单价")
     private BigDecimal shippingUnitPrice;
-    
-    @Schema(description = "币种代码")
-    @ExcelProperty("币种代码")
-    private String currencyCode;
-
-    // 基础产品信息
-    @Schema(description = "产品SKU")
-    @ExcelProperty("产品SKU")
-    private String sku;
-
-    @Schema(description = "产品长度(cm)")
-    @ExcelProperty("产品长度(cm)")
-    private BigDecimal productLength;
-
-    @Schema(description = "产品宽度(cm)")
-    @ExcelProperty("产品宽度(cm)")
-    private BigDecimal productWidth;
-
-    @Schema(description = "产品高度(cm)")
-    @ExcelProperty("产品高度(cm)")
-    private BigDecimal productHeight;
-
-    @Schema(description = "产品重量(kg)")
-    @ExcelProperty("产品重量(kg)")
-    private BigDecimal productWeight;
 
     // 售价和汇率
     @Schema(description = "售价", requiredMode = Schema.RequiredMode.REQUIRED, example = "25053")
     @ExcelProperty("售价")
     private BigDecimal price;
-
-    @Schema(description = "币种")
-    @ExcelProperty("币种")
-    private Integer currency;
-
-    @Schema(description = "汇率")
-    @ExcelProperty("汇率")
-    private BigDecimal exchangeRate;
 
     // 成本输入
     @Schema(description = "采购单价（CNY，不含税）")
@@ -148,27 +189,6 @@ public class ProfitCalculationRespVO {
     @Schema(description = "仓储费")
     @ExcelProperty("仓储费")
     private BigDecimal storageCost;
-
-    // 计算中间结果
-    @Schema(description = "立方米")
-    @ExcelProperty("立方米")
-    private BigDecimal volumeM3;
-
-    @Schema(description = "计算重量")
-    @ExcelProperty("计算重量")
-    private BigDecimal calculateWeight;
-
-    @Schema(description = "计算体积")
-    @ExcelProperty("计算体积")
-    private BigDecimal calculateVolume;
-
-    @Schema(description = "实际体积")
-    @ExcelProperty("实际体积")
-    private BigDecimal actualVolume;
-
-    @Schema(description = "实际重量")
-    @ExcelProperty("实际重量")
-    private BigDecimal actualWeight;
 
     // 各项费用明细
     @Schema(description = "国内运费")
@@ -211,22 +231,6 @@ public class ProfitCalculationRespVO {
     @Schema(description = "总成本")
     @ExcelProperty("总成本")
     private BigDecimal totalCost;
-
-    @Schema(description = "毛利润")
-    @ExcelProperty("毛利润")
-    private BigDecimal grossProfit;
-
-    @Schema(description = "毛利率(%)")
-    @ExcelProperty("毛利率(%)")
-    private BigDecimal grossMargin;
-
-    @Schema(description = "投资回报率(%)")
-    @ExcelProperty("投资回报率(%)")
-    private BigDecimal roi;
-
-    @Schema(description = "净利润")
-    @ExcelProperty("净利润")
-    private BigDecimal netProfit;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
