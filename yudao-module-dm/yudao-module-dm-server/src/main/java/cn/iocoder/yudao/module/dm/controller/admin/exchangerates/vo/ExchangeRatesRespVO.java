@@ -32,14 +32,7 @@ public class ExchangeRatesRespVO {
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
 
-    @Schema(description = "基础货币代码（ISO标准）", requiredMode = Schema.RequiredMode.REQUIRED)
-    @ExcelProperty(value = "基础货币代码（ISO标准）", converter = DictConvert.class)
-    @DictFormat("dm_currency_code") // TODO 代码优化：建议设置到对应的 DictTypeConstants 枚举类中
-    private Integer baseCurrency;
-
-    @Schema(description = "目标货币代码（ISO标准）", requiredMode = Schema.RequiredMode.REQUIRED)
-    @ExcelProperty(value = "目标货币代码（ISO标准）", converter = DictConvert.class)
-    @DictFormat("dm_currency_code") // TODO 代码优化：建议设置到对应的 DictTypeConstants 枚举类中
-    private Integer targetCurrency;
+    @Schema(description = "币种", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String currency;
 
 }

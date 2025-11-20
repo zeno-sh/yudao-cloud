@@ -20,8 +20,8 @@ public class DmExchangeRateQueryServiceImpl implements DmExchangeRateQueryServic
     private ExchangeRatesService exchangeRatesService;
 
     @Override
-    public CommonResult<BigDecimal> getExchangeRate(Integer baseCurrency) {
-        ExchangeRatesDO exchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(baseCurrency);
+    public CommonResult<BigDecimal> getExchangeRate(String baseCurrency) {
+        ExchangeRatesDO exchangeRatesDO = exchangeRatesService.getExchangeRatesByCurrencyCode(baseCurrency);
         if (exchangeRatesDO != null) {
             return CommonResult.success(exchangeRatesDO.getCustomRate());
         }

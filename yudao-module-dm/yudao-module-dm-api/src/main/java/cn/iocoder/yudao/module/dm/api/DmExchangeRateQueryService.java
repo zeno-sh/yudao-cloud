@@ -24,7 +24,7 @@ public interface DmExchangeRateQueryService {
 
     @GetMapping(PREFIX + "/getExchangeRate") // ③ Spring MVC 接口注解
     @Operation(summary = "获取自定义汇率")  // ② Swagger 接口文档
-    @Parameter(name = "baseCurrency", description = "币种", required = true, example = "1024") // ② Swagger 接口文档
-    CommonResult<BigDecimal> getExchangeRate(@RequestParam("baseCurrency") Integer baseCurrency);
+    @Parameter(name = "baseCurrency", description = "币种", required = true, example = "USD") // ② Swagger 接口文档
+    CommonResult<BigDecimal> getExchangeRate(@RequestParam("baseCurrency") String baseCurrency);
 
 }

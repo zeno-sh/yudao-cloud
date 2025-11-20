@@ -74,14 +74,6 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService {
     }
 
     @Override
-    public ExchangeRatesDO getExchangeRatesByBaseCurrency(Integer baseCurrency) {
-        LambdaQueryWrapperX<ExchangeRatesDO> queryWrapperX = new LambdaQueryWrapperX<ExchangeRatesDO>()
-                .eqIfPresent(ExchangeRatesDO::getBaseCurrency, baseCurrency)
-                .eqIfPresent(ExchangeRatesDO::getTargetCurrency, Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "CNY")));
-        return exchangeRatesMapper.selectOne(queryWrapperX);
-    }
-
-    @Override
     public ExchangeRatesDO getExchangeRatesByCurrencyCode(String currencyCode) {
         LambdaQueryWrapperX<ExchangeRatesDO> queryWrapperX = new LambdaQueryWrapperX<ExchangeRatesDO>()
                 .eqIfPresent(ExchangeRatesDO::getCurrencyCode, currencyCode);

@@ -53,14 +53,6 @@ public interface ExchangeRatesService {
     PageResult<ExchangeRatesDO> getExchangeRatesPage(ExchangeRatesPageReqVO pageReqVO);
 
     /**
-     * 根据基础货币
-     *
-     * @param baseCurrency
-     * @return
-     */
-    ExchangeRatesDO getExchangeRatesByBaseCurrency(Integer baseCurrency);
-
-    /**
      * 根据货币代码
      *
      * @param currencyCode

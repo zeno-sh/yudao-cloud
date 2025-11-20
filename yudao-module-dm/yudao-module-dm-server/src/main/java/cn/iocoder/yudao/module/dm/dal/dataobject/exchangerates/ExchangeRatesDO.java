@@ -37,21 +37,14 @@ public class ExchangeRatesDO extends BaseDO {
      * 自定义汇率
      */
     private BigDecimal customRate;
-    /**
-     * 基础货币代码（ISO标准）
-     *
-     * 枚举 {@link TODO dm_currency_code 对应的类}
-     */
+    @Deprecated
     private Integer baseCurrency;
-    /**
-     * 目标货币代码（ISO标准）
-     *
-     * 枚举 {@link TODO dm_currency_code 对应的类}
-     */
+    @Deprecated
     private Integer targetCurrency;
 
     /**
      * 货币代码
+     * 与表 system_currency 对齐
      *
      */
     private String currencyCode;

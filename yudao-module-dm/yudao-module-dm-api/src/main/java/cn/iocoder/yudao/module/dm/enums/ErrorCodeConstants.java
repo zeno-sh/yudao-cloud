@@ -118,6 +118,25 @@ public interface ErrorCodeConstants {
 
     // ========== Ozon广告同步任务 模块 2-001-018-000 ==========
     ErrorCode OZON_AD_SYNC_TASK_ERROR = new ErrorCode(2_001_018_000, "Ozon广告同步错误：{}");
+
+    // ========== 利润预测 1-003-001-000 ==========
+    ErrorCode PROFIT_CALCULATION_NOT_EXISTS = new ErrorCode(2_001_019_000, "利润预测不存在");
+    ErrorCode PROFIT_CALCULATION_IMPORT_LIST_IS_EMPTY = new ErrorCode(2_001_019_001, "导入利润预测数据不能为空！");
+    ErrorCode PROFIT_CALCULATION_TEMPLATE_NOT_EXISTS = new ErrorCode(2_001_019_002, "导入利润模板不存在");
+
+    // ========== 利润计算算法相关错误码 1-003-001-003 ~ 1-003-001-020 ==========
+    ErrorCode PROFIT_CALCULATION_REQUEST_NULL = new ErrorCode(2_001_019_003, "利润计算请求参数不能为空");
+    ErrorCode PROFIT_CALCULATION_PRODUCT_ID_NULL = new ErrorCode(2_001_019_004, "产品ID不能为空");
+    ErrorCode PROFIT_CALCULATION_COUNTRY_NULL = new ErrorCode(2_001_019_005, "国家不能为空");
+    ErrorCode PROFIT_CALCULATION_PLATFORM_NULL = new ErrorCode(2_001_019_006, "平台不能为空");
+    ErrorCode PROFIT_CALCULATION_PRICE_INVALID = new ErrorCode(2_001_019_007, "商品价格必须大于0");
+    ErrorCode PROFIT_CALCULATION_PURCHASE_COST_INVALID = new ErrorCode(2_001_019_008, "采购成本必须大于0");
+    ErrorCode PROFIT_CALCULATION_PRODUCT_SIZE_INVALID = new ErrorCode(2_001_019_009, "产品尺寸必须大于0");
+    ErrorCode PROFIT_CALCULATION_PRODUCT_WEIGHT_INVALID = new ErrorCode(2_001_019_010, "产品重量必须大于0");
+    ErrorCode PROFIT_CALCULATION_COUNTRY_NOT_SUPPORTED = new ErrorCode(2_001_019_011, "不支持的国家: {}");
+    ErrorCode PROFIT_CALCULATION_TEMPLATE_NOT_FOUND = new ErrorCode(2_001_019_012, "未找到模板ID为{}的利润计算模板");
+    ErrorCode PROFIT_CALCULATION_TEMPLATE_NOT_FOUND_FOR_COUNTRY = new ErrorCode(2_001_019_013, "未找到国家{}平台{}的默认利润计算模板");
+
 }
 
 

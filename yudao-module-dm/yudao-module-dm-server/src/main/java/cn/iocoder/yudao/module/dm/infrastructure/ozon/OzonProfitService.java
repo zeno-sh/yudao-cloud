@@ -1,25 +1,19 @@
 package cn.iocoder.yudao.module.dm.infrastructure.ozon;
 
-import cn.hutool.core.date.DateUtil;
-import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
 import cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.ProfitReportPageReqVO;
 import cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.ProfitReportRespVO;
 import cn.iocoder.yudao.module.dm.controller.admin.transaction.vo.OzonFinanceTransactionPageReqVO;
-import cn.iocoder.yudao.module.dm.controller.admin.transaction.vo.OzonServiceTransactionRespVO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.ad.OzonAdCampaignsItemDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.exchangerates.ExchangeRatesDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.transaction.OzonFinanceTransactionDO;
 import cn.iocoder.yudao.module.dm.infrastructure.ozon.dto.ClientSimpleInfoDTO;
 import cn.iocoder.yudao.module.dm.service.ad.OzonAdCampaignsItemService;
-import cn.iocoder.yudao.module.dm.service.ad.OzonAdCampaignsService;
 import cn.iocoder.yudao.module.dm.service.exchangerates.ExchangeRatesService;
 import cn.iocoder.yudao.module.dm.service.ozonshopmapping.OzonShopMappingService;
 import cn.iocoder.yudao.module.dm.service.product.ProductInfoService;
 import cn.iocoder.yudao.module.dm.service.transaction.OzonFinanceTransactionService;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,8 +34,6 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Objects;
-import cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.v2.CostBreakdown;
-import cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.v2.MonetaryAmount;
 
 /**
  * @author: Zeno
@@ -122,11 +114,9 @@ public class OzonProfitService {
      */
     private void loadExchangeRates() {
         try {
-            String rubCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB");
-            String usdCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "USD");
 
-            ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(rubCurrencyCode));
-            ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(usdCurrencyCode));
+            ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByCurrencyCode("RUB");
+            ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByCurrencyCode("USD");
             
             if (rubExchangeRatesDO != null && rubExchangeRatesDO.getCustomRate() != null) {
                 RUB_EXCHANGE_RATE = rubExchangeRatesDO.getCustomRate();
@@ -417,189 +407,6 @@ public class OzonProfitService {
         vo.setRoi(safeDivide(profitAmount, investmentCost.abs()));
     }
 
-    /**
-     * 降级处理方法
-     */
-    private void handleClientProfitReportFallback(ProfitReportPageReqVO pageReqVO, List<ProfitReportRespVO> records) {
-        log.warn("使用降级处理逻辑");
-        // 这里可以实现简化版的处理逻辑，或者原有逻辑
-        List<String> clientIds = convertList(records, ProfitReportRespVO::getClientId);
-        Map<String, ClientSimpleInfoDTO> shopMappingDOMap = ozonShopMappingService.batchSimpleInfoByClientIds(clientIds);
-
-        // 预先加载汇率信息，避免多次查询
-        String rubCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB");
-        String usdCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "USD");
-
-        // 先加载汇率数据，避免每次计算时都查询
-        ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(rubCurrencyCode));
-        ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(usdCurrencyCode));
-        if (rubCurrencyCode != null && rubExchangeRatesDO.getCustomRate() != null) {
-            RUB_EXCHANGE_RATE = rubExchangeRatesDO.getCustomRate();
-        }
-        if (usdCurrencyCode != null && usdExchangeRatesDO.getCustomRate() != null) {
-            USD_EXCHANGE_RATE = usdExchangeRatesDO.getCustomRate();
-        }
-
-        // 获取广告数据 - 改为根据签收订单的接单日期查询，按日期分组
-        final Map<String, cn.iocoder.yudao.module.dm.dal.dataobject.ad.OzonAdCampaignsItemDO> adMap;
-        if (pageReqVO.getFinanceDate() != null && pageReqVO.getFinanceDate().length == 2) {
-            List<String> clientIdList = Arrays.asList(pageReqVO.getClientIds());
-            LocalDate startDate = pageReqVO.getFinanceDate()[0];
-            LocalDate endDate = pageReqVO.getFinanceDate()[1];
-            
-            // 根据签收订单的接单日期查询广告费用，按日期分组
-            adMap = ozonAdCampaignsItemService.getAdCostByInProcessDateForClientGroupByDate(clientIdList, startDate, endDate);
-        } else {
-            adMap = new HashMap<>();
-        }
-
-        // 获取其他服务费
-        OzonFinanceTransactionPageReqVO ozonFinanceTransactionPageReqVO = new OzonFinanceTransactionPageReqVO();
-        ozonFinanceTransactionPageReqVO.setClientIds(pageReqVO.getClientIds());
-        ozonFinanceTransactionPageReqVO.setGroupType(pageReqVO.getGroupType());
-        ozonFinanceTransactionPageReqVO.setOperationDate(pageReqVO.getFinanceDate());
-        ozonFinanceTransactionPageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        IPage<OzonServiceTransactionRespVO> servicePageResult = new Page<>(pageReqVO.getPageNo(), pageReqVO.getPageSize());
-        ozonFinanceTransactionService.selectServicePage(servicePageResult, ozonFinanceTransactionPageReqVO);
-        Map<String, List<OzonServiceTransactionRespVO>> servcieMap = new HashMap<>();
-        List<OzonServiceTransactionRespVO> serviceRecords = servicePageResult.getRecords();
-        if (CollectionUtils.isNotEmpty(serviceRecords)) {
-            servcieMap.putAll(convertMultiMap(serviceRecords, OzonServiceTransactionRespVO::getOperationDate));
-        }
-
-        records.forEach(vo -> {
-            vo.setAdCost(BigDecimal.ZERO);
-            vo.setAdOrders(0);
-            vo.setAdAmount(BigDecimal.ZERO);
-            vo.setPlatformServiceCost(BigDecimal.ZERO);
-            if (shopMappingDOMap.containsKey(vo.getClientId())) {
-                ClientSimpleInfoDTO clientSimpleInfoDTO = shopMappingDOMap.get(vo.getClientId());
-                vo.setShopName(clientSimpleInfoDTO.getShopName());
-                vo.setPlatform(clientSimpleInfoDTO.getPlatform());
-                vo.setPlatformName(clientSimpleInfoDTO.getPlatformName());
-            }
-
-            // 设置固定币种 - 平台收入支出固定为卢布
-            // 使用VO中的币种字段，如果为空则使用默认值
-            if (vo.getPlatformCurrency() == null) {
-                vo.setPlatformCurrency(Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB")));
-            }
-
-            // 根据签收订单的接单日期查询广告费用
-            if (adMap.containsKey(vo.getClientId())) {
-                cn.iocoder.yudao.module.dm.dal.dataobject.ad.OzonAdCampaignsItemDO adData = adMap.get(vo.getClientId());
-                BigDecimal adAmount = adData.getOrdersMoney() != null ? adData.getOrdersMoney() : BigDecimal.ZERO;
-                Integer adOrders = adData.getOrders() != null ? adData.getOrders() : 0;
-                BigDecimal adSpendCost = adData.getMoneySpent() != null ? adData.getMoneySpent() : BigDecimal.ZERO;
-                
-                vo.setAdOrders(adOrders);
-                vo.setAdAmount(convertPrice(vo.getPlatformCurrency(), adAmount));
-                vo.setAdCost(convertPrice(vo.getPlatformCurrency(), adSpendCost.negate()));
-            }
-
-            String financeDate = vo.getFinanceDate();
-            if (servcieMap.containsKey(financeDate)) {
-                List<OzonServiceTransactionRespVO> ozonServiceTransactionRespVOS = servcieMap.get(financeDate);
-                for (OzonServiceTransactionRespVO ozonServiceTransactionRespVO : ozonServiceTransactionRespVOS) {
-                    if (ozonServiceTransactionRespVO.getClientId().equals(vo.getClientId())) {
-                        vo.setPlatformServiceCost(convertPrice(vo.getPlatformCurrency(), vo.getPlatformServiceCost().add(ozonServiceTransactionRespVO.getAmount().setScale(0, RoundingMode.HALF_UP))));
-                    }
-                }
-            }
-
-            vo.setAcos(safeDivide(vo.getAdCost().abs(), vo.getAdAmount().abs()));
-            vo.setAcoas(safeDivide(vo.getAdCost().abs(), vo.getSalesAmount().abs()));
-
-            // 结算金额=销售金额+退还佣金-取消金额-类目佣金-送货费-收单-逆向物流-赔偿-广告花费-平台服务费
-            BigDecimal totalSettAmount = vo.getSalesAmount()
-                    .add(vo.getReturnCommissionAmount())
-                    .subtract(vo.getCancelledAmount().abs())
-                    .subtract(vo.getCategoryCommissionCost().abs())
-                    .subtract(vo.getLogisticsTransferCost().abs())
-                    .subtract(vo.getLogisticsLastMileCost().abs())
-                    .subtract(vo.getLogisticsDropOff().abs())
-                    .add(vo.getOrderFeeCost()) // 有正数和负数所以需要加法
-                    .subtract(vo.getReverseLogisticsCost().abs())
-                    .subtract(vo.getRefundAmount().abs())
-                    .subtract(vo.getAdCost().abs())
-                    .subtract(vo.getPlatformServiceCost().abs());
-            vo.setSettleAmount(totalSettAmount);
-
-            // 确保币种字段有值
-            if (vo.getFbsCurrency() == null) {
-                vo.setFbsCurrency(Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "CNY")));
-            }
-            if (vo.getPurchaseCurrency() == null) {
-                vo.setPurchaseCurrency(Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "CNY")));
-            }
-            if (vo.getLogisticsCurrency() == null) {
-                vo.setLogisticsCurrency(Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "CNY")));
-            }
-            if (vo.getCustomsCurrency() == null) {
-                vo.setCustomsCurrency(Integer.valueOf(DictFrameworkUtils.parseDictDataValue("dm_currency_code", "CNY")));
-            }
-
-            // 转换为人民币进行计算
-            BigDecimal saleAmountCNY = convertToCNY(vo.getPlatformCurrency(), vo.getSalesAmount());
-            BigDecimal returnCategoryCommissionCNY = convertToCNY(vo.getPlatformCurrency(), vo.getReturnCommissionAmount());
-            BigDecimal cancelledAmountCNY = convertToCNY(vo.getPlatformCurrency(), vo.getCancelledAmount());
-            BigDecimal categoryCommissionCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getCategoryCommissionCost());
-            BigDecimal logisticsTransferCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getLogisticsTransferCost());
-            BigDecimal logisticsLastMileCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getLogisticsLastMileCost());
-            BigDecimal logisticsDropOffCNY = convertToCNY(vo.getPlatformCurrency(), vo.getLogisticsDropOff());
-            BigDecimal orderFeeCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getOrderFeeCost());
-            BigDecimal reverseLogisticsCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getReverseLogisticsCost());
-            BigDecimal refundAmountCNY = convertToCNY(vo.getPlatformCurrency(), vo.getRefundAmount());
-            BigDecimal adCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getAdCost());
-            BigDecimal platformServiceCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getPlatformServiceCost());
-            
-            // 计算人民币结算金额
-            BigDecimal totalSettAmountCNY = saleAmountCNY
-                    .add(returnCategoryCommissionCNY)
-                    .subtract(cancelledAmountCNY.abs())
-                    .subtract(categoryCommissionCostCNY.abs())
-                    .subtract(logisticsTransferCostCNY.abs())
-                    .subtract(logisticsLastMileCostCNY.abs())
-                    .subtract(logisticsDropOffCNY.abs())
-                    .add(orderFeeCostCNY) // 有正数和负数所以需要加法
-                    .subtract(reverseLogisticsCostCNY.abs())
-                    .subtract(refundAmountCNY.abs())
-                    .subtract(adCostCNY.abs())
-                    .subtract(platformServiceCostCNY.abs());
-            
-            // 转换其他成本为人民币 - 使用VO中的币种字段
-            BigDecimal fboDeliverCostCNY = convertToCNY(vo.getFbsCurrency(), vo.getFboDeliverCost());
-            BigDecimal fboInspectionCostCNY = convertToCNY(vo.getFbsCurrency(), vo.getFboInspectionCost());
-            BigDecimal fbsCheckInCostCNY = convertToCNY(vo.getFbsCurrency(), vo.getFbsCheckInCost());
-            BigDecimal fbsOperatingCostCNY = convertToCNY(vo.getFbsCurrency(), vo.getFbsOperatingCost());
-            BigDecimal fbsOtherCostCNY = convertToCNY(vo.getFbsCurrency(), vo.getFbsOtherCost());
-            BigDecimal purchaseCostCNY = convertToCNY(vo.getPurchaseCurrency(), vo.getPurchaseCost());
-            BigDecimal purchaseShippingCostCNY = convertToCNY(vo.getPurchaseCurrency(), vo.getPurchaseShippingCost());
-            BigDecimal logisticsShippingCostCNY = convertToCNY(vo.getLogisticsCurrency(), vo.getLogisticsShippingCost());
-            BigDecimal salesVatCostCNY = convertToCNY(vo.getPlatformCurrency(), vo.getSalesVatCost());
-            BigDecimal vatCostCNY = convertToCNY(vo.getCustomsCurrency(), vo.getVatCost());
-            BigDecimal customsCostCNY = convertToCNY(vo.getCustomsCurrency(), vo.getCustomsCost());
-
-            // 毛利润=结算金额-海外仓费用/FBO费用-采购成本-采购运费-头程运费-销售税-进口VAT-关税
-            BigDecimal profitAmount = totalSettAmountCNY
-                    .subtract(fboDeliverCostCNY.abs())
-                    .subtract(fboInspectionCostCNY.abs())
-                    .subtract(fbsCheckInCostCNY.abs())
-                    .subtract(fbsOperatingCostCNY.abs())
-                    .subtract(fbsOtherCostCNY.abs())
-                    .subtract(purchaseCostCNY.abs())
-                    .subtract(purchaseShippingCostCNY.abs())
-                    .subtract(logisticsShippingCostCNY.abs())
-                    .subtract(salesVatCostCNY.abs())
-                    .subtract(vatCostCNY.abs())
-                    .subtract(customsCostCNY.abs());
-
-            BigDecimal totalCost = purchaseCostCNY.add(logisticsShippingCostCNY);
-            vo.setRoi(safeDivide(profitAmount, totalCost.abs()));
-            vo.setProfitAmount(profitAmount);
-            vo.setProfitRate(safeDivide(profitAmount, saleAmountCNY));
-        });
-    }
 
     public void handleSkuProfitReport(List<ProfitReportRespVO> records) {
         List<String> clientIds = convertList(records, ProfitReportRespVO::getClientId);
@@ -609,19 +416,7 @@ public class OzonProfitService {
         Map<Long, ProductSimpleInfoVO> productSimpleInfoMap = productInfoService.batchQueryProductSimpleInfo(productIds);
 
         // 预先加载汇率信息，避免多次查询
-        String rubCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB");
-        String usdCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "USD");
-
-        // 先加载汇率数据，避免每次计算时都查询
-        ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(rubCurrencyCode));
-        ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(usdCurrencyCode));
-        if (rubCurrencyCode != null && rubExchangeRatesDO.getCustomRate() != null) {
-            RUB_EXCHANGE_RATE = rubExchangeRatesDO.getCustomRate();
-        }
-        if (usdCurrencyCode != null && usdExchangeRatesDO.getCustomRate() != null) {
-            USD_EXCHANGE_RATE = usdExchangeRatesDO.getCustomRate();
-        }
-
+        loadExchangeRates();
 
         // 获取SKU维度的广告费用数据，按日期分组
         final Map<String, cn.iocoder.yudao.module.dm.dal.dataobject.ad.OzonAdCampaignsItemDO> adMap;

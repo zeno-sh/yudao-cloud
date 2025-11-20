@@ -92,14 +92,4 @@ public class ExchangeRatesController {
                         BeanUtils.toBean(list, ExchangeRatesRespVO.class));
     }
 
-    @GetMapping("/get-by-currencies")
-    @Operation(summary = "根据基础货币和目标货币获取汇率")
-    @PreAuthorize("@ss.hasPermission('dm:exchange-rates:query')")
-    public CommonResult<ExchangeRatesRespVO> getExchangeRatesByCurrencies(
-            @RequestParam("baseCurrency") @NotNull(message = "基础货币代码不能为空") Integer baseCurrency) {
-        ExchangeRatesDO exchangeRates = exchangeRatesService.getExchangeRatesByBaseCurrency(
-                baseCurrency);
-        return success(BeanUtils.toBean(exchangeRates, ExchangeRatesRespVO.class));
-    }
-
 }

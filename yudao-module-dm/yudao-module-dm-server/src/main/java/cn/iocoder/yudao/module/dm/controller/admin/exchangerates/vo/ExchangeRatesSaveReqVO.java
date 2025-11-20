@@ -21,12 +21,8 @@ public class ExchangeRatesSaveReqVO {
     @NotNull(message = "自定义汇率不能为空")
     private BigDecimal customRate;
 
-    @Schema(description = "基础货币代码（ISO标准）", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "基础货币代码（ISO标准）不能为空")
-    private Integer baseCurrency;
-
-    @Schema(description = "目标货币代码（ISO标准）", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "目标货币代码（ISO标准）不能为空")
-    private Integer targetCurrency;
+    @Schema(description = "币种", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "币种不能为空")
+    private String currencyCode;
 
 }
