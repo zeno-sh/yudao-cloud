@@ -35,7 +35,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 利润预测")
 @RestController
-@RequestMapping("/multiple/profit-calculation")
+@RequestMapping("/dm/profit-calculation")
 @Validated
 public class ProfitCalculationController {
 

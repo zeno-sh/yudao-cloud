@@ -109,18 +109,14 @@ public class OzonProfitComputeServiceImpl implements ProfitComputeService {
         // 获取当前任务ID
         String taskId = MDC.get(MDC_TASK_ID_KEY);
 
-        // 预先加载汇率信息，避免多次查询
-        String rubCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB");
-        String usdCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "USD");
-
         // 先加载汇率数据，避免每次计算时都查询
-        ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(rubCurrencyCode));
-        ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(usdCurrencyCode));
-        if (rubCurrencyCode != null && rubExchangeRatesDO.getCustomRate() != null) {
+        ExchangeRatesDO rubExchangeRatesDO = exchangeRatesService.getExchangeRatesByCurrencyCode("RUB");
+        ExchangeRatesDO usdExchangeRatesDO = exchangeRatesService.getExchangeRatesByCurrencyCode("USD");
+        if (rubExchangeRatesDO.getCustomRate() != null) {
             RUB_EXCHANGE_RATE = rubExchangeRatesDO.getCustomRate();
             logger.info("从数据库加载卢布汇率: {}", RUB_EXCHANGE_RATE);
         }
-        if (usdCurrencyCode != null && usdExchangeRatesDO.getCustomRate() != null) {
+        if (usdExchangeRatesDO.getCustomRate() != null) {
             USD_EXCHANGE_RATE = usdExchangeRatesDO.getCustomRate();
             logger.info("从数据库加载美元汇率: {}", USD_EXCHANGE_RATE);
         }

@@ -499,6 +499,7 @@ public class ProductInfoServiceImpl implements ProductInfoService {
         vo.setPriceId(supplierPriceOfferDO.getId());
         vo.setSupplierName(productSupplierDO.getSupplierName());
         vo.setPrice(supplierPriceOfferDO.getPrice().toString());
+        vo.setCurrencyCode(supplierPriceOfferDO.getCurrencyCode());
         return vo;
     }
 

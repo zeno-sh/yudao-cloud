@@ -176,6 +176,9 @@ yudao:
       - /admin-api/system/user/profile/**
       - /admin-api/system/auth/**
     ignore-tables:
+      - system_country
+      - system_currency
+      - system_exchange_rate
     ignore-caches:
       - user_role_ids
       - permission_menu_ids

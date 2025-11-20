@@ -201,13 +201,13 @@ public abstract class AbstractCountryCalculationStrategy implements CountryCalcu
 
         // 退换货费用 = (采购成本+国内运费+货代费+关税+海运费+配送费+仓储+亚马逊抽成*20%) × 退货率
         BigDecimal baseCosts = result.getPurchaseCost()
-                .add(result.getLocalTransportCost())
-                .add(result.getFreightForwarderCost())
+                .add(result.getLocalTransportCost() != null ? result.getLocalTransportCost() : BigDecimal.ZERO)
+                .add(result.getFreightForwarderCost() != null ? result.getFreightForwarderCost() : BigDecimal.ZERO)
                 .add(result.getTariffCost() != null ? result.getTariffCost() : BigDecimal.ZERO)
-                .add(result.getFirstMileFreightCost())
-                .add(result.getDeliveryCost())
-                .add(result.getStorageCost())
-                .add(result.getCategoryCommissionCost()); // 亚马逊抽成的20%
+                .add(result.getFirstMileFreightCost() != null ? result.getFirstMileFreightCost() : BigDecimal.ZERO)
+                .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
+                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getCategoryCommissionCost() != null ? result.getCategoryCommissionCost() : BigDecimal.ZERO); // 亚马逊抽成的20%
 
         BigDecimal returnCost = baseCosts
                 .multiply(returnRate.divide(BigDecimal.valueOf(100), SCALE_RATE, DEFAULT_ROUNDING))

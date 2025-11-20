@@ -12,4 +12,5 @@ public class ProductSupplierPriceOfferRespVO {
     private Long priceId;
     private String supplierName;
     private String price;
+    private String currencyCode;
 }

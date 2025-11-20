@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.dm.service.profitreport.v2.data;
 
-import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.module.dm.controller.admin.profitreport.vo.v2.ProfitCalculationRequestVO;
 import cn.iocoder.yudao.module.dm.service.profitreport.v2.model.ExchangeRateData;
 import cn.iocoder.yudao.module.dm.service.exchangerates.ExchangeRatesService;
@@ -12,7 +11,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 汇率数据收集器
@@ -56,10 +54,10 @@ public class ExchangeRateDataCollector {
         
         try {
             // 获取RUB到CNY的汇率（基于现有Service接口）
-            ExchangeRatesDO rubToCnyRate = getRubToCnyRate();
+            ExchangeRatesDO rubToCnyRate = exchangeRatesService.getExchangeRatesByCurrencyCode("RUB");
             
             // 获取USD到CNY的汇率
-            ExchangeRatesDO usdToCnyRate = getUsdToCnyRate();
+            ExchangeRatesDO usdToCnyRate = exchangeRatesService.getExchangeRatesByCurrencyCode("USD");
             
             // 构建汇率列表
             List<ExchangeRatesDO> exchangeRates = new ArrayList<>();
@@ -89,46 +87,6 @@ public class ExchangeRateDataCollector {
         } catch (Exception e) {
             log.error("收集汇率数据失败: taskId={}", taskId, e);
             throw new RuntimeException("汇率数据收集失败", e);
-        }
-    }
-    
-    /**
-     * 获取RUB到CNY的汇率
-     */
-    private ExchangeRatesDO getRubToCnyRate() {
-        try {
-            // 修复：使用字典服务获取正确的货币代码，与V1版本保持一致
-            String rubCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "RUB");
-            if (rubCurrencyCode == null) {
-                log.warn("获取RUB货币代码失败，字典配置可能不存在");
-                return null;
-            }
-            
-            log.info("获取RUB汇率，货币代码: {}", rubCurrencyCode);
-            return exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(rubCurrencyCode));
-        } catch (Exception e) {
-            log.warn("获取RUB汇率失败，将使用默认汇率", e);
-            return null;
-        }
-    }
-    
-    /**
-     * 获取USD到CNY的汇率
-     */
-    private ExchangeRatesDO getUsdToCnyRate() {
-        try {
-            // 修复：使用字典服务获取正确的货币代码，与V1版本保持一致
-            String usdCurrencyCode = DictFrameworkUtils.parseDictDataValue("dm_currency_code", "USD");
-            if (usdCurrencyCode == null) {
-                log.warn("获取USD货币代码失败，字典配置可能不存在");
-                return null;
-            }
-            
-            log.info("获取USD汇率，货币代码: {}", usdCurrencyCode);
-            return exchangeRatesService.getExchangeRatesByBaseCurrency(Integer.valueOf(usdCurrencyCode));
-        } catch (Exception e) {
-            log.warn("获取USD汇率失败，将使用默认汇率", e);
-            return null;
         }
     }
     

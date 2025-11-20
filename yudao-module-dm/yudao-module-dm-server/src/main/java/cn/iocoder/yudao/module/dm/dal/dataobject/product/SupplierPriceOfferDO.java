@@ -44,6 +44,10 @@ public class SupplierPriceOfferDO extends BaseDO {
      */
     private Integer currency;
     /**
+     * 币种代码
+     */
+    private String currencyCode;
+    /**
      * 是否含税
      */
     private String tax;

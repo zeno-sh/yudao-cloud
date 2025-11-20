@@ -36,8 +36,16 @@ public class ProductCostsDTO implements Serializable {
 
     /**
      * 采购成本币种
+     *
+     * @deprecated 请使用 {@link #purchaseCurrencyCode} 代替
      */
+    @Deprecated
     private Integer purchaseCurrency;
+
+    /**
+     * 采购成本币种代码
+     */
+    private String purchaseCurrencyCode;
 
     /**
      * 采购运费
@@ -61,8 +69,16 @@ public class ProductCostsDTO implements Serializable {
 
     /**
      * 头程成本币种
+     *
+     * @deprecated 请使用 {@link #logisticsCurrencyCode} 代替
      */
+    @Deprecated
     private Integer logisticsCurrency;
+
+    /**
+     * 头程成本币种代码
+     */
+    private String logisticsCurrencyCode;
 
     /**
      * 海关关税费率
@@ -141,18 +157,42 @@ public class ProductCostsDTO implements Serializable {
 
     /**
      * 海关申报价币种
+     *
+     * @deprecated 请使用 {@link #customsCurrencyCode} 代替
      */
+    @Deprecated
     private Integer customsCurrency;
 
     /**
-     * FBO送仓费币种
+     * 海关申报价币种代码
      */
+    private String customsCurrencyCode;
+
+    /**
+     * FBO送仓费币种
+     *
+     * @deprecated 请使用 {@link #fboCurrencyCode} 代替
+     */
+    @Deprecated
     private Integer fboCurrency;
 
     /**
-     * 平台成本币种
+     * FBO送仓费币种代码
      */
+    private String fboCurrencyCode;
+
+    /**
+     * 平台成本币种
+     *
+     * @deprecated 请使用 {@link #platformCurrencyCode} 代替
+     */
+    @Deprecated
     private Integer platformCurrency;
+
+    /**
+     * 平台成本币种代码
+     */
+    private String platformCurrencyCode;
 
     /**
      * 海外仓
@@ -161,8 +201,16 @@ public class ProductCostsDTO implements Serializable {
 
     /**
      * 海外仓币种
+     *
+     * @deprecated 请使用 {@link #fbsCurrencyCode} 代替
      */
+    @Deprecated
     private Integer fbsCurrency;
+
+    /**
+     * 海外仓币种代码
+     */
+    private String fbsCurrencyCode;
 
     /**
      * 海外仓单位

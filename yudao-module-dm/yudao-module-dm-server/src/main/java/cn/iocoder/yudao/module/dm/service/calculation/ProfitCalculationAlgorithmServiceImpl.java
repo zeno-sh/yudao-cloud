@@ -169,13 +169,13 @@ public class ProfitCalculationAlgorithmServiceImpl implements ProfitCalculationA
 
         try {
             // 3. 尝试获取DM系统汇率
-            BigDecimal dmExchangeRate = exchangeRateQueryService.getExchangeRate(fromCurrency);
+            BigDecimal dmExchangeRate = exchangeRateQueryService.getExchangeRate(fromCurrency).getData();
             if (dmExchangeRate != null && dmExchangeRate.compareTo(BigDecimal.ZERO) > 0) {
                 return dmExchangeRate;
             }
 
             // 4. 尝试获取外部API汇率
-            ExchangeRateRespDTO rateRespDTO = exchangeRateApi.getExchangeRateByBaseCurrency(fromCurrency);
+            ExchangeRateRespDTO rateRespDTO = exchangeRateApi.getExchangeRateByBaseCurrency(fromCurrency).getData();
             if (rateRespDTO != null && rateRespDTO.getRate() != null
                     && rateRespDTO.getRate().compareTo(BigDecimal.ZERO) > 0) {
                 return rateRespDTO.getRate();

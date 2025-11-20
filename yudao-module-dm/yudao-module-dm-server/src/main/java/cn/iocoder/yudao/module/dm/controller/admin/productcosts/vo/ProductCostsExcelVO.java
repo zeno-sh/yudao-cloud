@@ -12,11 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * 产品成本结构导入 Excel VO
@@ -40,10 +36,11 @@ public class ProductCostsExcelVO {
     @ExcelProperty("Sku")
     private String skuId;
 
-    @ExcelProperty(value = "采购成本币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer purchaseCurrency;
+
+    @ExcelProperty("采购成本币种代码")
+    private String purchaseCurrencyCode;
 
     @ExcelProperty("采购成本")
     private BigDecimal purchaseCost;
@@ -56,10 +53,11 @@ public class ProductCostsExcelVO {
     @ExcelColumnSelect(dictType = "dm_fbs_unit_type")
     private Integer purchaseShippingUnit;
 
-    @ExcelProperty(value = "头程成本币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer logisticsCurrency;
+
+    @ExcelProperty("头程成本币种代码")
+    private String logisticsCurrencyCode;
 
     @ExcelProperty("头程运费")
     private BigDecimal logisticsShippingCost;
@@ -69,10 +67,11 @@ public class ProductCostsExcelVO {
     @ExcelColumnSelect(dictType = "dm_fbs_unit_type")
     private Integer logisticsUnit;
 
-    @ExcelProperty(value = "海关申报价币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer customsCurrency;
+
+    @ExcelProperty("海关申报价币种代码")
+    private String customsCurrencyCode;
 
     @ExcelProperty("海关关税费率")
     private BigDecimal customsDuty;
@@ -83,10 +82,11 @@ public class ProductCostsExcelVO {
     @ExcelProperty("海关申报价")
     private BigDecimal customsDeclaredValue;
 
-    @ExcelProperty(value = "FBO币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer fboCurrency;
+
+    @ExcelProperty("FBO币种代码")
+    private String fboCurrencyCode;
 
     @ExcelProperty("FBO送仓费")
     private BigDecimal fboDeliveryCost;
@@ -107,10 +107,11 @@ public class ProductCostsExcelVO {
     @ExcelProperty("海外仓")
     private String fbsWarehouseIds;
 
-    @ExcelProperty(value = "海外仓币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer fbsCurrency;
+
+    @ExcelProperty("海外仓币种代码")
+    private String fbsCurrencyCode;
 
     @ExcelProperty(value = "海外仓单位", converter = DictConvert.class)
     @DictFormat("dm_fbs_unit_type")
@@ -120,10 +121,11 @@ public class ProductCostsExcelVO {
     @ExcelProperty("海外仓成本")
     private BigDecimal fbsCost;
 
-    @ExcelProperty(value = "平台成本币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
-    @ExcelColumnSelect(dictType = "dm_currency_code")
+    @Deprecated
     private Integer platformCurrency;
+
+    @ExcelProperty("平台成本币种代码")
+    private String platformCurrencyCode;
 
     @ExcelProperty("类目佣金ID")
     private Long categoryCommissionId;

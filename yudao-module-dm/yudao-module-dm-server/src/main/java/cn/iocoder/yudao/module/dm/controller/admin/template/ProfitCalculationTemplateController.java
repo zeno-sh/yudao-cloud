@@ -29,7 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 利润计算配置模板")
 @RestController
-@RequestMapping("/multiple/profit-calculation-template")
+@RequestMapping("/dm/profit-calculation-template")
 @Validated
 public class ProfitCalculationTemplateController {
 

@@ -28,10 +28,12 @@ public class ProductCostsRespVO {
     @ExcelProperty("产品ID")
     private Long productId;
 
-    @Schema(description = "采购成本币种")
-    @ExcelProperty(value = "采购成本币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code") // TODO 代码优化：建议设置到对应的 DictTypeConstants 枚举类中
+    @Deprecated
     private Integer purchaseCurrency;
+
+    @Schema(description = "采购成本币种代码")
+    @ExcelProperty("采购成本币种代码")
+    private String purchaseCurrencyCode;
 
     @Schema(description = "采购运费")
     @ExcelProperty("采购运费")
@@ -106,9 +108,12 @@ public class ProductCostsRespVO {
     @ExcelProperty("采购成本")
     private BigDecimal purchaseCost;
 
-    @Schema(description = "头程成本币种")
-    @ExcelProperty("头程成本币种")
+    @Deprecated
     private Integer logisticsCurrency;
+
+    @Schema(description = "头程成本币种代码")
+    @ExcelProperty("头程成本币种代码")
+    private String logisticsCurrencyCode;
 
     @Schema(description = "最后一公里费用")
     @ExcelProperty("最后一公里费用")
@@ -122,26 +127,37 @@ public class ProductCostsRespVO {
     @ExcelProperty("广告费率")
     private BigDecimal adFeeRate;
 
-    @Schema(description = "海关申报价币种")
-    @ExcelProperty("海关申报价币种")
+    @Deprecated
     private Integer customsCurrency;
 
-    @Schema(description = "FBO送仓费币种")
-    @ExcelProperty("FBO送仓费币种")
+    @Schema(description = "海关申报价币种代码")
+    @ExcelProperty("海关申报价币种代码")
+    private String customsCurrencyCode;
+
+    @Deprecated
     private Integer fboCurrency;
 
-    @Schema(description = "平台成本币种")
-    @ExcelProperty("平台成本币种")
+    @Schema(description = "FBO送仓费币种代码")
+    @ExcelProperty("FBO送仓费币种代码")
+    private String fboCurrencyCode;
+
+    @Deprecated
     private Integer platformCurrency;
+
+    @Schema(description = "平台成本币种代码")
+    @ExcelProperty("平台成本币种代码")
+    private String platformCurrencyCode;
 
     @Schema(description = "海外仓")
     @ExcelProperty("海外仓")
     private Collection<Long> fbsWarehouseIds;
 
-    @Schema(description = "海外仓币种")
-    @ExcelProperty(value = "海外仓币种", converter = DictConvert.class)
-    @DictFormat("dm_currency_code")
+    @Deprecated
     private Integer fbsCurrency;
+
+    @Schema(description = "海外仓币种代码")
+    @ExcelProperty("海外仓币种代码")
+    private String fbsCurrencyCode;
 
     @Schema(description = "海外仓单位")
     @ExcelProperty(value = "海外仓单位", converter = DictConvert.class)

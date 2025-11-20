@@ -22,7 +22,11 @@ public class ProductCostsSaveReqVO {
     private Long productId;
 
     @Schema(description = "采购成本币种")
+    @Deprecated
     private Integer purchaseCurrency;
+
+    @Schema(description = "采购成本币种代码")
+    private String purchaseCurrencyCode;
 
     @Schema(description = "采购运费")
     private BigDecimal purchaseShippingCost;
@@ -31,7 +35,11 @@ public class ProductCostsSaveReqVO {
     private Integer purchaseShippingUnit;
 
     @Schema(description = "头程成本币种")
+    @Deprecated
     private Integer logisticsCurrency;
+
+    @Schema(description = "头程成本币种代码")
+    private String logisticsCurrencyCode;
 
     @Schema(description = "头程运费")
     private BigDecimal logisticsShippingCost;
@@ -40,7 +48,11 @@ public class ProductCostsSaveReqVO {
     private Integer logisticsUnit;
 
     @Schema(description = "海关申报价币种")
+    @Deprecated
     private Integer customsCurrency;
+
+    @Schema(description = "海关申报价币种代码")
+    private String customsCurrencyCode;
 
     @Schema(description = "海关关税费率")
     private BigDecimal customsDuty;
@@ -94,16 +106,28 @@ public class ProductCostsSaveReqVO {
     private BigDecimal adFeeRate;
 
     @Schema(description = "FBO送仓费币种")
+    @Deprecated
     private Integer fboCurrency;
 
+    @Schema(description = "FBO送仓费币种代码")
+    private String fboCurrencyCode;
+
     @Schema(description = "平台成本币种")
+    @Deprecated
     private Integer platformCurrency;
+
+    @Schema(description = "平台成本币种代码")
+    private String platformCurrencyCode;
 
     @Schema(description = "海外仓")
     private List<Long> fbsWarehouseIds;
 
     @Schema(description = "海外仓币种")
+    @Deprecated
     private Integer fbsCurrency;
+
+    @Schema(description = "海外仓币种代码")
+    private String fbsCurrencyCode;
 
     @Schema(description = "海外仓单位")
     private Integer fbsCostUnit;
