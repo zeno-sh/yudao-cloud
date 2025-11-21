@@ -104,7 +104,7 @@ public class KRCalculationStrategy extends AbstractCountryCalculationStrategy {
         // 获取申报比例
         BigDecimal declarationRatio = request.getDeclarationRatio() != null 
                 ? request.getDeclarationRatio().divide(BigDecimal.valueOf(100), SCALE_RATE, DEFAULT_ROUNDING)
-                : BigDecimal.valueOf(0.7); // 默认70%申报
+                : BigDecimal.valueOf(1);
         
         // 采购成本(韩币)已在initializeResult中计算：purchaseUnit(CNY) ÷ exchangeRate
         BigDecimal purchaseCostKRW = result.getPurchaseCost();
@@ -196,15 +196,15 @@ public class KRCalculationStrategy extends AbstractCountryCalculationStrategy {
         
         // 计算退换货费用基数（不包含数字服务费）
         BigDecimal returnBase = BigDecimal.ZERO
-                .add(result.getPurchaseCost())
-                .add(result.getLocalTransportCost())
-                .add(result.getFreightForwarderCost())
-                .add(result.getTariffCost())
+                .add(result.getPurchaseCost() != null ? result.getPurchaseCost() : BigDecimal.ZERO)
+                .add(result.getLocalTransportCost() != null ? result.getLocalTransportCost() : BigDecimal.ZERO)
+                .add(result.getFreightForwarderCost() != null ? result.getFreightForwarderCost() : BigDecimal.ZERO)
+                .add(result.getTariffCost() != null ? result.getTariffCost() : BigDecimal.ZERO)
                 .add(result.getSaleCost() != null ? result.getSaleCost() : BigDecimal.ZERO) // 销售税成本
-                .add(result.getFirstMileFreightCost())
-                .add(result.getDeliveryCost())
-                .add(result.getStorageCost())
-                .add(result.getCategoryCommissionCost());
+                .add(result.getFirstMileFreightCost() != null ? result.getFirstMileFreightCost() : BigDecimal.ZERO)
+                .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
+                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getCategoryCommissionCost() != null ? result.getCategoryCommissionCost() : BigDecimal.ZERO);
         
         BigDecimal returnCost = returnBase
                 .multiply(returnRate.divide(BigDecimal.valueOf(100), SCALE_RATE, DEFAULT_ROUNDING))

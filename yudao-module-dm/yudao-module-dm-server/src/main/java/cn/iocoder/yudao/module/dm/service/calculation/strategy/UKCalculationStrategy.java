@@ -165,16 +165,16 @@ public class UKCalculationStrategy extends AbstractCountryCalculationStrategy {
         
         // 计算退换货费用基数
         BigDecimal returnBase = BigDecimal.ZERO
-                .add(result.getPurchaseCost())
-                .add(result.getLocalTransportCost())
-                .add(result.getFreightForwarderCost())
-                .add(result.getTariffCost())
-                .add(result.getVatCost())
-                .add(result.getFirstMileFreightCost())
-                .add(result.getDeliveryCost())
-                .add(result.getStorageCost())
-                .add(result.getCategoryCommissionCost())
-                .add(result.getDigitalServiceCost()); // 包含数字服务费
+                .add(result.getPurchaseCost() != null ? result.getPurchaseCost() : BigDecimal.ZERO)
+                .add(result.getLocalTransportCost() != null ? result.getLocalTransportCost() : BigDecimal.ZERO)
+                .add(result.getFreightForwarderCost() != null ? result.getFreightForwarderCost() : BigDecimal.ZERO)
+                .add(result.getTariffCost() != null ? result.getTariffCost() : BigDecimal.ZERO)
+                .add(result.getVatCost() != null ? result.getVatCost() : BigDecimal.ZERO)
+                .add(result.getFirstMileFreightCost() != null ? result.getFirstMileFreightCost() : BigDecimal.ZERO)
+                .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
+                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getCategoryCommissionCost() != null ? result.getCategoryCommissionCost() : BigDecimal.ZERO)
+                .add(result.getDigitalServiceCost() != null ? result.getDigitalServiceCost() : BigDecimal.ZERO); // 包含数字服务费
         
         BigDecimal returnCost = returnBase
                 .multiply(returnRate.divide(BigDecimal.valueOf(100), SCALE_RATE, DEFAULT_ROUNDING))

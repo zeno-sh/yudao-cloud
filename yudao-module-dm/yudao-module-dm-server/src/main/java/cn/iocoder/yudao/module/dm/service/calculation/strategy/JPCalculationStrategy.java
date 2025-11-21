@@ -129,15 +129,15 @@ public class JPCalculationStrategy extends AbstractCountryCalculationStrategy {
         
         // 计算退换货费用基数（不包含数字服务费）
         BigDecimal returnBase = BigDecimal.ZERO
-                .add(result.getPurchaseCost())
-                .add(result.getLocalTransportCost())
-                .add(result.getFreightForwarderCost())
-                .add(result.getTariffCost())
-                .add(result.getVatCost()) // 这里存储的是消费税
-                .add(result.getFirstMileFreightCost())
-                .add(result.getDeliveryCost())
-                .add(result.getStorageCost())
-                .add(result.getCategoryCommissionCost()); // 亚马逊抽成*20%
+                .add(result.getPurchaseCost() != null ? result.getPurchaseCost() : BigDecimal.ZERO)
+                .add(result.getLocalTransportCost() != null ? result.getLocalTransportCost() : BigDecimal.ZERO)
+                .add(result.getFreightForwarderCost() != null ? result.getFreightForwarderCost() : BigDecimal.ZERO)
+                .add(result.getTariffCost() != null ? result.getTariffCost() : BigDecimal.ZERO)
+                .add(result.getVatCost() != null ? result.getVatCost() : BigDecimal.ZERO) // 这里存储的是消费税
+                .add(result.getFirstMileFreightCost() != null ? result.getFirstMileFreightCost() : BigDecimal.ZERO)
+                .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
+                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getCategoryCommissionCost() != null ? result.getCategoryCommissionCost() : BigDecimal.ZERO); // 亚马逊抽成*20%
         
         BigDecimal returnCost = returnBase
                 .multiply(returnRate.divide(BigDecimal.valueOf(100), SCALE_RATE, DEFAULT_ROUNDING))
