@@ -83,6 +83,9 @@ public class ProfitCalculationSaveReqVO {
     @Schema(description = "VAT税率(%)")
     private BigDecimal vatRate;
 
+    @Schema(description = "销售税率(%)（韩国等国家）")
+    private BigDecimal saleRate;
+
     @Schema(description = "申报比例(%)")
     private BigDecimal declarationRatio;
 

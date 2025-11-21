@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 @ExcelIgnoreUnannotated
 public class ProfitCalculationRespVO {
 
+    @Schema(description = "主键ID")
+    private Long id;
+
     @Schema(description = "序号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @ExcelProperty("序号")
     private Integer rowNum;
@@ -136,6 +139,10 @@ public class ProfitCalculationRespVO {
     @ExcelProperty("VAT税率(%)")
     private BigDecimal vatRate;
     
+    @Schema(description = "销售税率(%)（韩国等国家）")
+    @ExcelProperty("销售税率(%)")
+    private BigDecimal saleRate;
+    
     @Schema(description = "申报比例(%)")
     @ExcelProperty("申报比例(%)")
     private BigDecimal declarationRatio;
@@ -206,6 +213,14 @@ public class ProfitCalculationRespVO {
     @Schema(description = "VAT费用")
     @ExcelProperty("VAT费用")
     private BigDecimal vatCost;
+
+    @Schema(description = "销售税费用（韩国等国家）")
+    @ExcelProperty("销售税费用")
+    private BigDecimal saleCost;
+
+    @Schema(description = "应纳税额（韩国：销项税-进项税）")
+    @ExcelProperty("应纳税额")
+    private BigDecimal actualTaxAmount;
 
     @Schema(description = "头程运费")
     @ExcelProperty("头程运费")

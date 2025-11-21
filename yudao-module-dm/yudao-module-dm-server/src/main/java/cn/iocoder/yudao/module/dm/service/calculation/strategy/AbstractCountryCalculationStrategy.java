@@ -240,6 +240,7 @@ public abstract class AbstractCountryCalculationStrategy implements CountryCalcu
                 .add(result.getFirstMileFreightCost())
                 .add(result.getTariffCost() != null ? result.getTariffCost() : BigDecimal.ZERO)
                 .add(result.getVatCost() != null ? result.getVatCost() : BigDecimal.ZERO)
+                .add(result.getSaleCost() != null ? result.getSaleCost() : BigDecimal.ZERO)
                 .add(result.getDigitalServiceCost() != null ? result.getDigitalServiceCost() : BigDecimal.ZERO)
                 .add(result.getCategoryCommissionCost())
                 .add(result.getAdCost())

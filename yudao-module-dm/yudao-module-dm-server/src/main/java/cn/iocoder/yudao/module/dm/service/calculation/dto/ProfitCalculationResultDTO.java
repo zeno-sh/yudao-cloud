@@ -70,6 +70,10 @@ public class ProfitCalculationResultDTO {
      */
     private BigDecimal vatRate;
     /**
+     * 销售税率(%)（韩国等国家）
+     */
+    private BigDecimal saleRate;
+    /**
      * 申报比例(%)
      */
     private BigDecimal declarationRatio;
@@ -198,6 +202,14 @@ public class ProfitCalculationResultDTO {
      * VAT费用
      */
     private BigDecimal vatCost;
+    /**
+     * 销售税费用（韩国等国家）
+     */
+    private BigDecimal saleCost;
+    /**
+     * 应纳税额（韩国：销项税-进项税）
+     */
+    private BigDecimal actualTaxAmount;
     /**
      * 头程运费
      */
