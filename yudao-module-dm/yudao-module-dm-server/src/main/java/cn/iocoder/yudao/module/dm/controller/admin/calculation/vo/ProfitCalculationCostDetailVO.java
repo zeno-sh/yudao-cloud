@@ -65,4 +65,7 @@ public class ProfitCalculationCostDetailVO {
     @Schema(description = "退换货费用")
     private BigDecimal returnCost;
     
+    @Schema(description = "海外仓费用")
+    private BigDecimal fbsCost;
+    
 }

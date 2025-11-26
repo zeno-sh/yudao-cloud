@@ -242,6 +242,10 @@ public class ProfitCalculationRespVO {
     @ExcelProperty("退换货费用")
     private BigDecimal returnCost;
 
+    @Schema(description = "海外仓费用")
+    @ExcelProperty("海外仓费用")
+    private BigDecimal fbsCost;
+
     // 利润计算结果
     @Schema(description = "总成本")
     @ExcelProperty("总成本")

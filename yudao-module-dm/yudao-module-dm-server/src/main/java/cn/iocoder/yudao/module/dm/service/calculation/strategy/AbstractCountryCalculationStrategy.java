@@ -199,7 +199,7 @@ public abstract class AbstractCountryCalculationStrategy implements CountryCalcu
         // 获取退货率
         BigDecimal returnRate = request.getReturnRate() != null ? request.getReturnRate() : BigDecimal.ZERO;
 
-        // 退换货费用 = (采购成本+国内运费+货代费+关税+海运费+配送费+仓储+亚马逊抽成*20%) × 退货率
+        // 退换货费用 = (采购成本+国内运费+货代费+关税+海运费+配送费+仓储+海外仓费用+亚马逊抽成*20%) × 退货率
         BigDecimal baseCosts = (result.getPurchaseCost() != null ? result.getPurchaseCost() : BigDecimal.ZERO)
                 .add(result.getLocalTransportCost() != null ? result.getLocalTransportCost() : BigDecimal.ZERO)
                 .add(result.getFreightForwarderCost() != null ? result.getFreightForwarderCost() : BigDecimal.ZERO)
@@ -207,6 +207,7 @@ public abstract class AbstractCountryCalculationStrategy implements CountryCalcu
                 .add(result.getFirstMileFreightCost() != null ? result.getFirstMileFreightCost() : BigDecimal.ZERO)
                 .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
                 .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getFbsCost() != null ? result.getFbsCost() : BigDecimal.ZERO)
                 .add(result.getCategoryCommissionCost() != null ? result.getCategoryCommissionCost() : BigDecimal.ZERO); // 亚马逊抽成的20%
 
         BigDecimal returnCost = baseCosts
@@ -246,7 +247,8 @@ public abstract class AbstractCountryCalculationStrategy implements CountryCalcu
                 .add(result.getAdCost() != null ? result.getAdCost() : BigDecimal.ZERO)
                 .add(result.getReturnCost() != null ? result.getReturnCost() : BigDecimal.ZERO)
                 .add(result.getDeliveryCost() != null ? result.getDeliveryCost() : BigDecimal.ZERO)
-                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO);
+                .add(result.getStorageCost() != null ? result.getStorageCost() : BigDecimal.ZERO)
+                .add(result.getFbsCost() != null ? result.getFbsCost() : BigDecimal.ZERO);
         result.setTotalCost(totalCost.setScale(SCALE_MONEY, DEFAULT_ROUNDING));
 
         // 毛利润 = 售价 - 总成本

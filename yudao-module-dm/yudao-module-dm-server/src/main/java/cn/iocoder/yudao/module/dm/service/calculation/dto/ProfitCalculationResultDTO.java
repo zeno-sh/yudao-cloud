@@ -230,6 +230,10 @@ public class ProfitCalculationResultDTO {
      * 退换货费用
      */
     private BigDecimal returnCost;
+    /**
+     * 海外仓费用
+     */
+    private BigDecimal fbsCost;
 
     // 利润计算结果
     /**

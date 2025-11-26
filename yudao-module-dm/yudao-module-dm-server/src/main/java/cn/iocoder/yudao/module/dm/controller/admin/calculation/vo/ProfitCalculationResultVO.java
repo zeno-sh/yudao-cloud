@@ -257,6 +257,11 @@ public class ProfitCalculationResultVO {
      */
     @Schema(description = "退换货费", example = "0.60")
     private BigDecimal returnCost;
+    /**
+     * 海外仓费用
+     */
+    @Schema(description = "海外仓费用", example = "2.00")
+    private BigDecimal fbsCost;
 
     // 最终计算结果
     /**

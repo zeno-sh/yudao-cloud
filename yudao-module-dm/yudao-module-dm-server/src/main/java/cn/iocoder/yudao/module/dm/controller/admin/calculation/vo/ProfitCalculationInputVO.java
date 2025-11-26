@@ -32,4 +32,5 @@ public class ProfitCalculationInputVO {
     private BigDecimal purchaseCost;
     private BigDecimal deliveryCost;
     private BigDecimal storageCost;
+    private BigDecimal fbsCost;
 }

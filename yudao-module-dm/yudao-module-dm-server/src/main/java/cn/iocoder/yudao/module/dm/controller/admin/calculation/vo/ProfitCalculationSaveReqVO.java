@@ -104,6 +104,9 @@ public class ProfitCalculationSaveReqVO {
     @Schema(description = "退货率(%)")
     private BigDecimal returnRate;
 
+    @Schema(description = "海外仓费用", example = "2.00")
+    private BigDecimal fbsCost;
+
     // 其他配置
     @Schema(description = "体积系数（立方米转重量）")
     private BigDecimal volumeCoefficient;

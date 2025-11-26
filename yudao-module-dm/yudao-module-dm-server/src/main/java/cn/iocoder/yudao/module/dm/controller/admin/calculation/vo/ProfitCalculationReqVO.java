@@ -88,6 +88,10 @@ public class ProfitCalculationReqVO {
     @DecimalMin(value = "0", message = "仓储费不能为负数")
     private BigDecimal storageCost;
 
+    @Schema(description = "海外仓费用", example = "2.00")
+    @DecimalMin(value = "0", message = "海外仓费用不能为负数")
+    private BigDecimal fbsCost;
+
     // ========== 自定义配置（可选，覆盖模板配置） ==========
 
     @Schema(description = "自定义体积系数", example = "200")

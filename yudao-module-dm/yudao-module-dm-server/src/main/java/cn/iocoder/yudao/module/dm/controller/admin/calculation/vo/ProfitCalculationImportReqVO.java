@@ -103,4 +103,9 @@ public class ProfitCalculationImportReqVO {
     @DecimalMin(value = "0", message = "仓储费不能小于0")
     private BigDecimal storageCost;
 
+    @Schema(description = "海外仓费用")
+    @ExcelProperty("海外仓费用")
+    @DecimalMin(value = "0", message = "海外仓费用不能小于0")
+    private BigDecimal fbsCost;
+
 }
