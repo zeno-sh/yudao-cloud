@@ -33,6 +33,6 @@ public class ExchangeRatesRespVO {
     private LocalDateTime createTime;
 
     @Schema(description = "币种", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String currency;
+    private String currencyCode;
 
 }

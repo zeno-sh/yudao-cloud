@@ -71,6 +71,15 @@ public class ExchangeRatesController {
         return success(BeanUtils.toBean(exchangeRates, ExchangeRatesRespVO.class));
     }
 
+    @GetMapping("/get-by-currency-code")
+    @Operation(summary = "根据币种代码获得汇率")
+    @Parameter(name = "currencyCode", description = "币种代码", required = true, example = "USD")
+    @PreAuthorize("@ss.hasPermission('dm:exchange-rates:query')")
+    public CommonResult<ExchangeRatesRespVO> getExchangeRatesByCurrencyCode(@RequestParam("currencyCode") String currencyCode) {
+        ExchangeRatesDO exchangeRates = exchangeRatesService.getExchangeRatesByCurrencyCode(currencyCode);
+        return success(BeanUtils.toBean(exchangeRates, ExchangeRatesRespVO.class));
+    }
+
     @GetMapping("/page")
     @Operation(summary = "获得汇率分页")
     @PreAuthorize("@ss.hasPermission('dm:exchange-rates:query')")

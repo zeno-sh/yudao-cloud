@@ -5,7 +5,6 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductInfoDO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.product.SupplierPriceOfferDO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.supplier.ProductSupplierDO;
 import org.apache.ibatis.annotations.Mapper;
 import cn.iocoder.yudao.module.dm.controller.admin.product.vo.*;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
