@@ -43,6 +43,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 多平台公共契约 -->
+        <dependency>
+            <groupId>cn.iocoder.cloud</groupId>
+            <artifactId>yudao-module-platform-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Web 相关 -->
         <dependency>
             <groupId>cn.iocoder.cloud</groupId>

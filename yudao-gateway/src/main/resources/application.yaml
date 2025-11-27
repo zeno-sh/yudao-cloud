@@ -220,6 +220,13 @@ spring:
             - Path=/admin-api/coupang/**
           filters:
             - RewritePath=/admin-api/coupang/v3/api-docs, /v3/api-docs
+        ## data-server 服务
+        - id: data-admin-api
+          uri: grayLb://data-server
+          predicates: # 断言，作为路由的匹配条件，对应 RouteDefinition 数组
+            - Path=/admin-api/data/**
+          filters:
+            - RewritePath=/admin-api/data/v3/api-docs, /v3/api-docs
       x-forwarded:
         prefix-enabled: false # 避免 Swagger 重复带上额外的 /admin-api/system 前缀
 
@@ -289,6 +296,9 @@ knife4j:
       - name: coupang-server
         service-name: coupang-server
         url: /admin-api/coupang/v3/api-docs
+      - name: data-server
+        service-name: data-server
+        url: /admin-api/data/v3/api-docs
 
 --- #################### 芋道相关配置 ####################
 
