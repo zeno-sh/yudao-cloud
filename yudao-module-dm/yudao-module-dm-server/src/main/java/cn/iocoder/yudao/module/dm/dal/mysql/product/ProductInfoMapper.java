@@ -42,9 +42,9 @@ public interface ProductInfoMapper extends BaseMapperX<ProductInfoDO> {
                     .eqIfPresent(ProductInfoDO::getCategoryId, reqVO.getCategoryId())
                     .eqIfPresent(ProductInfoDO::getBrandId, reqVO.getBrandId())
                     .eqIfPresent(ProductInfoDO::getFlagId, reqVO.getFlagId())
-                    .eqIfPresent(ProductInfoDO::getDeleted, reqVO.getDeleted())
                     .eqIfPresent(ProductInfoDO::getPlatform, reqVO.getPlatform())
                     .betweenIfPresent(ProductInfoDO::getCreateTime, reqVO.getCreateTime());
+            // 注意：deleted 字段由 MyBatis-Plus 逻辑删除自动处理，不需要手动添加
 
             wrapper.orderByDesc(ProductInfoDO::getId);
             return selectPage(reqVO, wrapper);
@@ -81,9 +81,7 @@ public interface ProductInfoMapper extends BaseMapperX<ProductInfoDO> {
         if (reqVO.getFlagId() != null) {
             wrapper.eq(ProductInfoDO::getFlagId, reqVO.getFlagId());
         }
-        if (reqVO.getDeleted() != null) {
-            wrapper.eq(ProductInfoDO::getDeleted, reqVO.getDeleted());
-        }
+        // 注意：deleted 字段由 MyBatis-Plus 逻辑删除自动处理，不需要手动添加
         if (reqVO.getPlatform() != null) {
             wrapper.eq(ProductInfoDO::getPlatform, reqVO.getPlatform());
         }

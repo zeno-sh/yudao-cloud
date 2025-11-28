@@ -13,6 +13,7 @@ import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
+import net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -78,13 +79,14 @@ public class ProductDataPermissionRule implements DataPermissionRule {
             ));
         }
 
-        // 合并所有条件
+        // 合并所有条件，使用括号包裹 OR 表达式，避免 AND/OR 优先级问题
+        // 正确生成: (creator = ? OR id IN (?))，而不是裸的 OR 导致条件被错误拆分
         Expression result = conditions.get(0);
         for (int i = 1; i < conditions.size(); i++) {
             result = new OrExpression(result, conditions.get(i));
         }
 
-        return result;
+        return new ParenthesedExpressionList(result);
     }
 }
 

@@ -34,9 +34,6 @@ public class ProductInfoPageReqVO extends PageParam {
     @Schema(description = "标签", example = "4299")
     private Integer flagId;
 
-    @Schema(description = "是否删除")
-    private Boolean deleted;
-
     @Schema(description = "目标平台")
     private Integer platform;
 
