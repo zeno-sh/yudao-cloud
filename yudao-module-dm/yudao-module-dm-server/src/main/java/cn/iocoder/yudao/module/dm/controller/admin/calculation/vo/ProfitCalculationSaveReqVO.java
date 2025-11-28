@@ -62,7 +62,7 @@ public class ProfitCalculationSaveReqVO {
     @Schema(description = "配送费", example = "10.00")
     private BigDecimal deliveryCost;
 
-    @Schema(description = "配送费", example = "10.00")
+    @Schema(description = "仓储费", example = "10.00")
     private BigDecimal storageCost;
 
     @Schema(description = "海运计费方式：1-按体积，2-按重量", example = "2")

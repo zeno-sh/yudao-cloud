@@ -105,34 +105,6 @@ public class USCalculationStrategy extends AbstractCountryCalculationStrategy {
                                         ProfitCalculationResultDTO result) {
         super.calculateOtherCosts(request, template, result);
         
-        // 美国站点特有的其他费用计算
-        // 例如：FBA费用、长期仓储费等
-        calculateFBAFees(request, template, result);
-    }
-
-    /**
-     * 计算FBA费用（如果启用）
-     */
-    private void calculateFBAFees(ProfitCalculationSaveReqVO request,
-                                   ProfitCalculationTemplateDO template,
-                                   ProfitCalculationResultDTO result) {
-        // 检查是否启用FBA
-        Integer fbaEnabled = request.getFbaEnabled() != null ? request.getFbaEnabled() : 0;
-        
-        if (fbaEnabled == 0) {
-            return; // 未启用FBA，不计算FBA费用
-        }
-        
-        // FBA费用计算逻辑（根据产品尺寸和重量）
-        // 这里可以根据亚马逊FBA费用标准进行计算
-        // 暂时使用简化计算：基于重量的固定费率
-        BigDecimal fbaFee = result.getCalculateWeight()
-                .multiply(BigDecimal.valueOf(2.0)) // 假设每公斤2美元的FBA费用
-                .setScale(SCALE_MONEY, DEFAULT_ROUNDING);
-        
-        // 将FBA费用加入到配送费中
-        BigDecimal totalDeliveryCost = result.getDeliveryCost().add(fbaFee);
-        result.setDeliveryCost(totalDeliveryCost);
     }
 
     @Override
