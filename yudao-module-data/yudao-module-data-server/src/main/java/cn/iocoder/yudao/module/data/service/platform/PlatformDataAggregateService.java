@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.dm.dto.ShopMappingDTO;
 import cn.iocoder.yudao.module.platform.common.api.PlatformShopStatisticsApi;
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsDTO;
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsQueryDTO;
+import cn.iocoder.yudao.module.coupang.api.statistics.CoupangShopStatisticsApi;
 import cn.iocoder.yudao.module.sellfox.api.statistics.AmazonShopStatisticsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,13 +41,10 @@ public class PlatformDataAggregateService {
     private AmazonShopStatisticsApi amazonShopStatisticsApi;
 
     @Resource
-    private DmShopMappingQueryService dmShopMappingQueryService;
+    private CoupangShopStatisticsApi coupangShopStatisticsApi;
 
-    // TODO: 后续添加其他平台
-    // @Resource
-    // private OzonShopStatisticsApi ozonShopStatisticsApi;
-    // @Resource
-    // private CoupangShopStatisticsApi coupangShopStatisticsApi;
+    @Resource
+    private DmShopMappingQueryService dmShopMappingQueryService;
 
     /**
      * 平台 API Map，key 为平台 ID（字典 dm_platform 的值）
@@ -62,8 +60,10 @@ public class PlatformDataAggregateService {
     public void init() {
         platformApiMap = new HashMap<>();
         // 平台ID对应字典 dm_platform 的值
-        // Amazon: 1
+        // Amazon: 60
         platformApiMap.put(60, amazonShopStatisticsApi);
+        // Coupang: 40
+        platformApiMap.put(50, coupangShopStatisticsApi);
 
         log.info("平台数据聚合服务初始化完成，已注册 {} 个平台: {}", platformApiMap.size(), platformApiMap.keySet());
     }
@@ -88,11 +88,11 @@ public class PlatformDataAggregateService {
     /**
      * 查询店铺统计数据
      *
-     * @param platformIds 平台ID列表，为空则查询所有已注册平台
-     * @param queryDTO    查询条件
+     * @param queryDTO 查询条件（包含 platformIds，为空则查询所有已注册平台）
      * @return 店铺统计数据列表
      */
-    public List<ShopStatisticsDTO> getShopStatistics(List<Integer> platformIds, ShopStatisticsQueryDTO queryDTO) {
+    public List<ShopStatisticsDTO> getShopStatistics(ShopStatisticsQueryDTO queryDTO) {
+        List<Integer> platformIds = queryDTO.getPlatformIds();
         List<Integer> targetPlatformIds = (platformIds == null || platformIds.isEmpty())
                 ? new ArrayList<>(platformApiMap.keySet())
                 : platformIds.stream().filter(platformApiMap::containsKey).collect(Collectors.toList());

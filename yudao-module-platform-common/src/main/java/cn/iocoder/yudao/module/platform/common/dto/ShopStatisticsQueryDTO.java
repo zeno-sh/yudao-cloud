@@ -19,6 +19,9 @@ public class ShopStatisticsQueryDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Schema(description = "平台ID列表，为空则查询所有平台", example = "[50, 60]")
+    private List<Integer> platformIds;
+
     @Schema(description = "店铺ID列表", example = "[\"123456\"]")
     private List<String> shopIds;
 

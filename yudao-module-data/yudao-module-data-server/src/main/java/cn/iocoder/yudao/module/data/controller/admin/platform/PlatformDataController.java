@@ -5,14 +5,12 @@ import cn.iocoder.yudao.module.data.service.platform.PlatformDataAggregateServic
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsDTO;
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsQueryDTO;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -45,11 +43,8 @@ public class PlatformDataController {
 
     @PostMapping("/shop-statistics/list")
     @Operation(summary = "查询多平台店铺统计数据")
-    @Parameter(name = "platformIds", description = "平台ID列表，为空则查询所有平台")
-    public CommonResult<List<ShopStatisticsDTO>> listShopStatistics(
-            @RequestParam(value = "platformIds", required = false) List<Integer> platformIds,
-            @RequestBody ShopStatisticsQueryDTO queryDTO) {
-        return success(aggregateService.getShopStatistics(platformIds, queryDTO));
+    public CommonResult<List<ShopStatisticsDTO>> listShopStatistics(@RequestBody ShopStatisticsQueryDTO queryDTO) {
+        return success(aggregateService.getShopStatistics(queryDTO));
     }
 
 }
