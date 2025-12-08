@@ -16,6 +16,9 @@ import cn.iocoder.yudao.module.fbs.api.WarehouseInventoryApi;
 import cn.iocoder.yudao.module.fbs.api.WarehouseZoneApi;
 import cn.iocoder.yudao.module.fbs.api.dto.WarehouseSalesDTO;
 import cn.iocoder.yudao.module.fbs.spi.dto.InventoryDTO;
+import cn.iocoder.yudao.module.sellfox.api.inventory.FbaInventoryApi;
+import cn.iocoder.yudao.module.sellfox.api.inventory.dto.FbaInventoryDTO;
+import cn.iocoder.yudao.module.sellfox.api.inventory.dto.FbaInventoryQueryReqDTO;
 import cn.iocoder.yudao.module.sellfox.api.order.AmazonOrderService;
 import cn.iocoder.yudao.module.sellfox.api.order.dto.AmazonOrderDTO;
 import cn.iocoder.yudao.module.sellfox.api.order.dto.AmazonOrderItemDTO;
@@ -54,6 +57,9 @@ public class SkuReportServiceImpl implements SkuReportService {
     @Resource
     private WarehouseInventoryApi warehouseInventoryApi;
 
+    @Resource
+    private FbaInventoryApi fbaInventoryApi;
+
     @Override
     public PageResult<SkuReportRespVO> querySkuReport(SkuReportQueryReqVO reqVO) {
         // 1. 查询全部数据
@@ -90,6 +96,11 @@ public class SkuReportServiceImpl implements SkuReportService {
                 () -> queryWarehouseInventory(allInventoryProductIds)
         );
 
+        // 查询 FBA 库存
+        CompletableFuture<Map<Long, FbaInventoryDTO>> fbaInventoryFuture = CompletableFuture.supplyAsync(
+                () -> queryFbaInventory(productIds, reqVO.getShopId())
+        );
+
         // 3. 处理订单：拆解组合产品订单用于子产品消耗统计
         CompletableFuture<List<AmazonOrderDTO>> expandedOrdersFuture = ordersFuture.thenApplyAsync(
                 this::expandBundleProductOrders
@@ -116,7 +127,7 @@ public class SkuReportServiceImpl implements SkuReportService {
 
         // 5. 等待所有异步任务完成
         CompletableFuture.allOf(warehouseSalesFuture, expandedWarehouseSalesFuture, 
-                platformSalesFuture, expandedPlatformSalesFuture, inventoryFuture).join();
+                platformSalesFuture, expandedPlatformSalesFuture, inventoryFuture, fbaInventoryFuture).join();
 
         // 6. 获取结果
         Map<Long, List<WarehouseSalesDTO>> warehouseSalesByProductMap = warehouseSalesFuture.join();
@@ -127,6 +138,7 @@ public class SkuReportServiceImpl implements SkuReportService {
         
         Map<Long, Map<String, Integer>> availableInventoryMap = inventoryData.getAvailableInventoryMap();
         Map<Long, Map<String, Integer>> inboundInventoryMap = inventoryData.getInboundInventoryMap();
+        Map<Long, FbaInventoryDTO> fbaInventoryMap = fbaInventoryFuture.join();
 
         // 7. 处理组合产品：计算组合产品的可组合库存（可用库存和在途库存都需要计算）
         Map<Long, Map<String, Integer>> bundleAvailableInventoryMap = calculateBundleInventory(products, availableInventoryMap);
@@ -151,7 +163,7 @@ public class SkuReportServiceImpl implements SkuReportService {
                             : expandedPlatformSalesByProductIdMap;
                     
                     return buildSkuReport(product, warehouseSales, platformSales, 
-                            bundleAvailableInventoryMap, bundleInboundInventoryMap, days);
+                            bundleAvailableInventoryMap, bundleInboundInventoryMap, fbaInventoryMap, days);
                 })
                 .collect(Collectors.toList());
 
@@ -355,6 +367,49 @@ public class SkuReportServiceImpl implements SkuReportService {
     }
 
     /**
+     * 查询FBA库存
+     *
+     * @param productIds 产品ID列表
+     * @param shopId     店铺ID（可选）
+     * @return Map<产品ID, FbaInventoryDTO>
+     */
+    private Map<Long, FbaInventoryDTO> queryFbaInventory(List<Long> productIds, String shopId) {
+        if (CollUtil.isEmpty(productIds)) {
+            return Collections.emptyMap();
+        }
+
+        try {
+            FbaInventoryQueryReqDTO reqDTO = new FbaInventoryQueryReqDTO();
+            reqDTO.setLocalProductIds(productIds);
+            if (StrUtil.isNotBlank(shopId)) {
+                reqDTO.setShopIds(Collections.singletonList(shopId));
+            }
+
+            CommonResult<List<FbaInventoryDTO>> result = fbaInventoryApi.queryByLocalProductIds(reqDTO);
+            if (result != null && result.getData() != null) {
+                // 按产品ID分组，如果有多条记录则取可用库存最大的一条
+                Map<Long, FbaInventoryDTO> fbaInventoryMap = result.getData().stream()
+                        .filter(inv -> inv.getLocalProductId() != null)
+                        .collect(Collectors.toMap(
+                                FbaInventoryDTO::getLocalProductId,
+                                inv -> inv,
+                                (existing, replacement) -> {
+                                    // 如果同一产品有多条记录，取可用库存更大的
+                                    int existingQty = existing.getAvailable() != null ? existing.getAvailable() : 0;
+                                    int replacementQty = replacement.getAvailable() != null ? replacement.getAvailable() : 0;
+                                    return existingQty >= replacementQty ? existing : replacement;
+                                }
+                        ));
+                log.info("查询FBA库存完成: 请求产品数={}, 返回库存记录数={}", productIds.size(), fbaInventoryMap.size());
+                return fbaInventoryMap;
+            }
+        } catch (Exception e) {
+            log.error("查询FBA库存失败", e);
+        }
+        return Collections.emptyMap();
+    }
+
+    /**
      * 查询海外仓库存，并按产品ID和仓库代码统计库存数量（包括可用库存和在途库存）
      *
      * @param productIds 产品ID列表
@@ -407,6 +462,7 @@ public class SkuReportServiceImpl implements SkuReportService {
             Map<Long, Map<Integer, Double>> platformSalesByProductIdMap,
             Map<Long, Map<String, Integer>> availableInventoryMap,
             Map<Long, Map<String, Integer>> inboundInventoryMap,
+            Map<Long, FbaInventoryDTO> fbaInventoryMap,
             int days) {
 
         SkuReportRespVO vo = new SkuReportRespVO();
@@ -455,12 +511,19 @@ public class SkuReportServiceImpl implements SkuReportService {
                 .sum();
         vo.setOverseasInboundQty(overseasInbound);
 
-        // TODO: FBA库存需要从其他地方获取
-        vo.setFbaAvailableQty(0);
-        vo.setFbaInboundQty(0);
+        // FBA库存：从 fbaInventoryMap 获取
+        FbaInventoryDTO fbaInventory = fbaInventoryMap.get(product.getId());
+        int fbaAvailable = 0;
+        int fbaInbound = 0;
+        if (fbaInventory != null) {
+            fbaAvailable = fbaInventory.getAvailable() != null ? fbaInventory.getAvailable() : 0;
+            fbaInbound = fbaInventory.getInboundQty() != null ? fbaInventory.getInboundQty() : 0;
+        }
+        vo.setFbaAvailableQty(fbaAvailable);
+        vo.setFbaInboundQty(fbaInbound);
 
         // 总库存 = 海外仓 + FBA
-        vo.setTotalQty(overseasTotal + vo.getFbaAvailableQty());
+        vo.setTotalQty(overseasTotal + fbaAvailable);
 
         // 从 List<WarehouseSalesDTO>中获取该产品的各仓库销量，计算日均销量并转换为Map
         List<WarehouseSalesDTO> salesList = warehouseSalesByProductMap.get(product.getId());
