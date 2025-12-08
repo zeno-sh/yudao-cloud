@@ -2,6 +2,8 @@ package cn.iocoder.yudao.module.bpm.framework.rpc.config;
 
 import cn.iocoder.yudao.module.bpm.api.event.CrmContractStatusListener;
 import cn.iocoder.yudao.module.bpm.api.event.CrmReceivableStatusListener;
+import cn.iocoder.yudao.module.bpm.api.event.DmPurchasePlanStatusListener;
+import cn.iocoder.yudao.module.infra.api.config.ConfigApi;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.PostApi;
 import cn.iocoder.yudao.module.system.api.dict.DictDataApi;
@@ -14,10 +16,15 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.Resource;
+
 @Configuration(value = "bpmRpcConfiguration", proxyBeanMethods = false)
 @EnableFeignClients(clients = {RoleApi.class, DeptApi.class, PostApi.class, AdminUserApi.class, SmsSendApi.class, DictDataApi.class,
-        PermissionApi.class})
+        PermissionApi.class, ConfigApi.class})
 public class RpcConfiguration {
+
+    @Resource
+    private ConfigApi configApi;
 
     // ========== 特殊：解决微 yudao-cloud 微服务场景下，跨服务（进程）无法 Listener 的问题 ==========
 
@@ -31,6 +38,12 @@ public class RpcConfiguration {
     @ConditionalOnMissingBean(name = "crmContractStatusListener")
     public CrmContractStatusListener crmContractStatusListener() {
         return new CrmContractStatusListener();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "dmPurchasePlanStatusListener")
+    public DmPurchasePlanStatusListener dmPurchasePlanStatusListener() {
+        return new DmPurchasePlanStatusListener(configApi);
     }
 
 }
