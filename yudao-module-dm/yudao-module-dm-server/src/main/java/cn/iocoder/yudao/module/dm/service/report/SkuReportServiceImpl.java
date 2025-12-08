@@ -16,13 +16,12 @@ import cn.iocoder.yudao.module.fbs.api.WarehouseInventoryApi;
 import cn.iocoder.yudao.module.fbs.api.WarehouseZoneApi;
 import cn.iocoder.yudao.module.fbs.api.dto.WarehouseSalesDTO;
 import cn.iocoder.yudao.module.fbs.spi.dto.InventoryDTO;
-import cn.iocoder.yudao.module.sellfox.api.inventory.FbaInventoryApi;
-import cn.iocoder.yudao.module.sellfox.api.inventory.dto.FbaInventoryDTO;
-import cn.iocoder.yudao.module.sellfox.api.inventory.dto.FbaInventoryQueryReqDTO;
-import cn.iocoder.yudao.module.sellfox.api.order.AmazonOrderService;
-import cn.iocoder.yudao.module.sellfox.api.order.dto.AmazonOrderDTO;
-import cn.iocoder.yudao.module.sellfox.api.order.dto.AmazonOrderItemDTO;
-import cn.iocoder.yudao.module.sellfox.api.order.dto.AmazonOrderQueryReqDTO;
+import cn.iocoder.yudao.module.dm.service.platform.PlatformInventoryAggregateService;
+import cn.iocoder.yudao.module.dm.service.platform.PlatformOrderAggregateService;
+import cn.iocoder.yudao.module.platform.common.dto.PlatformInventoryDTO;
+import cn.iocoder.yudao.module.platform.common.dto.PlatformOrderDTO;
+import cn.iocoder.yudao.module.platform.common.dto.PlatformOrderItemDTO;
+import cn.iocoder.yudao.module.platform.common.dto.PlatformOrderQueryDTO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -49,16 +48,16 @@ public class SkuReportServiceImpl implements SkuReportService {
     private ProductBundleRelationMapper bundleRelationMapper;
 
     @Resource
-    private AmazonOrderService amazonOrderService;
+    private PlatformOrderAggregateService platformOrderAggregateService;
+
+    @Resource
+    private PlatformInventoryAggregateService platformInventoryAggregateService;
 
     @Resource
     private WarehouseZoneApi warehouseZoneApi;
 
     @Resource
     private WarehouseInventoryApi warehouseInventoryApi;
-
-    @Resource
-    private FbaInventoryApi fbaInventoryApi;
 
     @Override
     public PageResult<SkuReportRespVO> querySkuReport(SkuReportQueryReqVO reqVO) {
@@ -85,8 +84,8 @@ public class SkuReportServiceImpl implements SkuReportService {
                 .collect(Collectors.toList());
 
         // 2. 并行执行：查询订单 和 查询库存（需要包含所有子产品）
-        CompletableFuture<List<AmazonOrderDTO>> ordersFuture = CompletableFuture.supplyAsync(
-                () -> queryAmazonOrders(reqVO)
+        CompletableFuture<List<PlatformOrderDTO>> ordersFuture = CompletableFuture.supplyAsync(
+                () -> queryPlatformOrders(reqVO, productIds)
         );
 
         // 获取所有需要查询库存的产品ID（包括组合产品的子产品）
@@ -96,13 +95,13 @@ public class SkuReportServiceImpl implements SkuReportService {
                 () -> queryWarehouseInventory(allInventoryProductIds)
         );
 
-        // 查询 FBA 库存
-        CompletableFuture<Map<Long, FbaInventoryDTO>> fbaInventoryFuture = CompletableFuture.supplyAsync(
-                () -> queryFbaInventory(productIds, reqVO.getShopId())
+        // 查询 FBA 库存（使用新的聚合服务，按产品ID和平台ID分组）
+        CompletableFuture<Map<Long, Map<Integer, PlatformInventoryDTO>>> fbaInventoryFuture = CompletableFuture.supplyAsync(
+                () -> platformInventoryAggregateService.queryFbaInventoryByProductIds(productIds, null)
         );
 
         // 3. 处理订单：拆解组合产品订单用于子产品消耗统计
-        CompletableFuture<List<AmazonOrderDTO>> expandedOrdersFuture = ordersFuture.thenApplyAsync(
+        CompletableFuture<List<PlatformOrderDTO>> expandedOrdersFuture = ordersFuture.thenApplyAsync(
                 this::expandBundleProductOrders
         );
 
@@ -138,7 +137,7 @@ public class SkuReportServiceImpl implements SkuReportService {
         
         Map<Long, Map<String, Integer>> availableInventoryMap = inventoryData.getAvailableInventoryMap();
         Map<Long, Map<String, Integer>> inboundInventoryMap = inventoryData.getInboundInventoryMap();
-        Map<Long, FbaInventoryDTO> fbaInventoryMap = fbaInventoryFuture.join();
+        Map<Long, Map<Integer, PlatformInventoryDTO>> fbaInventoryMap = fbaInventoryFuture.join();
 
         // 7. 处理组合产品：计算组合产品的可组合库存（可用库存和在途库存都需要计算）
         Map<Long, Map<String, Integer>> bundleAvailableInventoryMap = calculateBundleInventory(products, availableInventoryMap);
@@ -183,28 +182,35 @@ public class SkuReportServiceImpl implements SkuReportService {
     }
 
     /**
-     * 查询亚马逊订单
+     * 查询平台订单（支持多平台）
      */
-    private List<AmazonOrderDTO> queryAmazonOrders(SkuReportQueryReqVO reqVO) {
+    private List<PlatformOrderDTO> queryPlatformOrders(SkuReportQueryReqVO reqVO, List<Long> localProductIds) {
         try {
-            AmazonOrderQueryReqDTO orderReq = new AmazonOrderQueryReqDTO();
-            orderReq.setShopId(reqVO.getShopId());
-            orderReq.setMarketplace(reqVO.getMarketplace());
+            PlatformOrderQueryDTO queryDTO = new PlatformOrderQueryDTO();
+            queryDTO.setLocalProductIds(localProductIds);
+
+            // 店铺ID
+            if (StrUtil.isNotBlank(reqVO.getShopId())) {
+                queryDTO.setShopIds(Collections.singletonList(reqVO.getShopId()));
+            }
+
+            // 站点ID
+            if (StrUtil.isNotBlank(reqVO.getMarketplace())) {
+                queryDTO.setMarketplaceIds(Collections.singletonList(reqVO.getMarketplace()));
+            }
 
             // 将 LocalDate 转换为 LocalDateTime
             if (reqVO.getStartTime() != null) {
-                orderReq.setStartTime(reqVO.getStartTime().atStartOfDay());
+                queryDTO.setStartTime(reqVO.getStartTime().atStartOfDay());
             }
             if (reqVO.getEndTime() != null) {
-                orderReq.setEndTime(reqVO.getEndTime().atTime(23, 59, 59));
+                queryDTO.setEndTime(reqVO.getEndTime().atTime(23, 59, 59));
             }
 
-            CommonResult<List<AmazonOrderDTO>> result = amazonOrderService.queryOrdersByCondition(orderReq);
-            if (result != null && result.getData() != null) {
-                return result.getCheckedData();
-            }
+            // 查询所有平台订单（platformIds 为 null 表示查询所有已注册平台）
+            return platformOrderAggregateService.queryOrders(queryDTO, null);
         } catch (Exception e) {
-            log.error("查询亚马逊订单失败", e);
+            log.error("查询平台订单失败", e);
         }
         return Collections.emptyList();
     }
@@ -213,7 +219,7 @@ public class SkuReportServiceImpl implements SkuReportService {
      * 按产品维度统计各仓库日均销量
      * 从订单明细中提取产品对应的订单邮编，批量调用RPC接口统计，然后除以天数得到日均销量
      */
-    private Map<Long, List<WarehouseSalesDTO>> calculateWarehouseSalesByProduct(List<AmazonOrderDTO> orders, SkuReportQueryReqVO reqVO) {
+    private Map<Long, List<WarehouseSalesDTO>> calculateWarehouseSalesByProduct(List<PlatformOrderDTO> orders, SkuReportQueryReqVO reqVO) {
         if (CollUtil.isEmpty(orders)) {
             return Collections.emptyMap();
         }
@@ -229,7 +235,7 @@ public class SkuReportServiceImpl implements SkuReportService {
             // Map<产品ID, List<邮编>>
             Map<Long, List<String>> productZipCodesMap = new HashMap<>();
 
-            for (AmazonOrderDTO order : orders) {
+            for (PlatformOrderDTO order : orders) {
                 // 跳过没有邮编的订单
                 if (StringUtils.isBlank(order.getPostalCode())) {
                     continue;
@@ -246,14 +252,14 @@ public class SkuReportServiceImpl implements SkuReportService {
                 }
 
                 // 遍历订单中的每个商品，记录该产品的订单邮编
-                for (AmazonOrderItemDTO item : order.getItems()) {
+                for (PlatformOrderItemDTO item : order.getItems()) {
                     Long localProductId = item.getLocalProductId();
                     if (localProductId == null) {
                         continue;
                     }
 
                     // 获取商品数量
-                    Integer quantity = item.getQuantityOrdered();
+                    Integer quantity = item.getQuantity();
                     if (quantity == null || quantity <= 0) {
                         continue;
                     }
@@ -287,15 +293,12 @@ public class SkuReportServiceImpl implements SkuReportService {
 
     /**
      * 按本地产品ID统计各平台日均销量
-     * 统计逻辑：遍历订单的商品明细列表，按 localProductId 累加销量，然后除以天数得到日均销量（保留2位小数）
+     * 统计逻辑：遍历订单的商品明细列表，按 localProductId 和 platformId 累加销量，然后除以天数得到日均销量（保留2位小数）
      */
-    private Map<Long, Map<Integer, Double>> calculatePlatformSalesBySku(List<AmazonOrderDTO> orders, SkuReportQueryReqVO reqVO) {
+    private Map<Long, Map<Integer, Double>> calculatePlatformSalesBySku(List<PlatformOrderDTO> orders, SkuReportQueryReqVO reqVO) {
         if (CollUtil.isEmpty(orders)) {
             return Collections.emptyMap();
         }
-
-        // 亚马逊平台ID
-        Integer amazonPlatformId = 1;
 
         // 计算天数
         int days = calculateDays(reqVO.getStartTime(), reqVO.getEndTime());
@@ -303,17 +306,23 @@ public class SkuReportServiceImpl implements SkuReportService {
             days = 1; // 至少按1天计算
         }
 
-        // 统计各本地产品ID的总销量
-        Map<Long, Integer> productTotalSalesMap = new HashMap<>();
+        // 统计各本地产品ID在各平台的总销量
+        // Map<产品ID, Map<平台ID, 总销量>>
+        Map<Long, Map<Integer, Integer>> productPlatformSalesMap = new HashMap<>();
 
-        for (AmazonOrderDTO order : orders) {
+        for (PlatformOrderDTO order : orders) {
             // 跳过没有商品明细的订单
             if (CollUtil.isEmpty(order.getItems())) {
                 continue;
             }
 
+            Integer platformId = order.getPlatformId();
+            if (platformId == null) {
+                platformId = 60; // 默认亚马逊
+            }
+
             // 遍历订单中的每个商品
-            for (AmazonOrderItemDTO item : order.getItems()) {
+            for (PlatformOrderItemDTO item : order.getItems()) {
                 // 使用本地产品ID作为统计维度
                 Long localProductId = item.getLocalProductId();
                 if (localProductId == null) {
@@ -321,30 +330,33 @@ public class SkuReportServiceImpl implements SkuReportService {
                 }
 
                 // 获取商品数量
-                Integer quantity = item.getQuantityOrdered();
+                Integer quantity = item.getQuantity();
                 if (quantity == null || quantity <= 0) {
                     continue;
                 }
 
-                // 累加该产品ID的销量
-                productTotalSalesMap.merge(localProductId, quantity, Integer::sum);
+                // 累加该产品ID在该平台的销量
+                Integer finalPlatformId = platformId;
+                productPlatformSalesMap
+                        .computeIfAbsent(localProductId, k -> new HashMap<>())
+                        .merge(finalPlatformId, quantity, Integer::sum);
             }
         }
 
-        // 计算各产品的日均销量（保留2位小数）
+        // 计算各产品在各平台的日均销量（保留2位小数）
         Map<Long, Map<Integer, Double>> result = new HashMap<>();
-        for (Map.Entry<Long, Integer> entry : productTotalSalesMap.entrySet()) {
+        for (Map.Entry<Long, Map<Integer, Integer>> entry : productPlatformSalesMap.entrySet()) {
             Long productId = entry.getKey();
-            Integer totalSales = entry.getValue();
+            Map<Integer, Integer> platformSales = entry.getValue();
 
-            // 日均销量 = 总销量 / 天数，保留2位小数
-            double dailyAvgSales = Math.round((double) totalSales / days * 100.0) / 100.0;
+            Map<Integer, Double> platformDailySales = new HashMap<>();
+            for (Map.Entry<Integer, Integer> platformEntry : platformSales.entrySet()) {
+                // 日均销量 = 总销量 / 天数，保留2位小数
+                double dailyAvgSales = Math.round((double) platformEntry.getValue() / days * 100.0) / 100.0;
+                platformDailySales.put(platformEntry.getKey(), dailyAvgSales);
+            }
 
-            // 构建平台销量Map
-            Map<Integer, Double> platformSalesMap = new HashMap<>();
-            platformSalesMap.put(amazonPlatformId, dailyAvgSales);
-
-            result.put(productId, platformSalesMap);
+            result.put(productId, platformDailySales);
         }
 
         log.info("按本地产品ID统计销量完成: 总订单数={}, 统计天数={}, 产品数={}",
@@ -364,49 +376,6 @@ public class SkuReportServiceImpl implements SkuReportService {
         long days = java.time.temporal.ChronoUnit.DAYS.between(startTime, endTime);
 
         return (int) (days + 1); // 包含开始和结束日期
-    }
-
-    /**
-     * 查询FBA库存
-     *
-     * @param productIds 产品ID列表
-     * @param shopId     店铺ID（可选）
-     * @return Map<产品ID, FbaInventoryDTO>
-     */
-    private Map<Long, FbaInventoryDTO> queryFbaInventory(List<Long> productIds, String shopId) {
-        if (CollUtil.isEmpty(productIds)) {
-            return Collections.emptyMap();
-        }
-
-        try {
-            FbaInventoryQueryReqDTO reqDTO = new FbaInventoryQueryReqDTO();
-            reqDTO.setLocalProductIds(productIds);
-            if (StrUtil.isNotBlank(shopId)) {
-                reqDTO.setShopIds(Collections.singletonList(shopId));
-            }
-
-            CommonResult<List<FbaInventoryDTO>> result = fbaInventoryApi.queryByLocalProductIds(reqDTO);
-            if (result != null && result.getData() != null) {
-                // 按产品ID分组，如果有多条记录则取可用库存最大的一条
-                Map<Long, FbaInventoryDTO> fbaInventoryMap = result.getData().stream()
-                        .filter(inv -> inv.getLocalProductId() != null)
-                        .collect(Collectors.toMap(
-                                FbaInventoryDTO::getLocalProductId,
-                                inv -> inv,
-                                (existing, replacement) -> {
-                                    // 如果同一产品有多条记录，取可用库存更大的
-                                    int existingQty = existing.getAvailable() != null ? existing.getAvailable() : 0;
-                                    int replacementQty = replacement.getAvailable() != null ? replacement.getAvailable() : 0;
-                                    return existingQty >= replacementQty ? existing : replacement;
-                                }
-                        ));
-                log.info("查询FBA库存完成: 请求产品数={}, 返回库存记录数={}", productIds.size(), fbaInventoryMap.size());
-                return fbaInventoryMap;
-            }
-        } catch (Exception e) {
-            log.error("查询FBA库存失败", e);
-        }
-        return Collections.emptyMap();
     }
 
     /**
@@ -462,7 +431,7 @@ public class SkuReportServiceImpl implements SkuReportService {
             Map<Long, Map<Integer, Double>> platformSalesByProductIdMap,
             Map<Long, Map<String, Integer>> availableInventoryMap,
             Map<Long, Map<String, Integer>> inboundInventoryMap,
-            Map<Long, FbaInventoryDTO> fbaInventoryMap,
+            Map<Long, Map<Integer, PlatformInventoryDTO>> fbaInventoryMap,
             int days) {
 
         SkuReportRespVO vo = new SkuReportRespVO();
@@ -511,19 +480,41 @@ public class SkuReportServiceImpl implements SkuReportService {
                 .sum();
         vo.setOverseasInboundQty(overseasInbound);
 
-        // FBA库存：从 fbaInventoryMap 获取
-        FbaInventoryDTO fbaInventory = fbaInventoryMap.get(product.getId());
-        int fbaAvailable = 0;
-        int fbaInbound = 0;
-        if (fbaInventory != null) {
-            fbaAvailable = fbaInventory.getAvailable() != null ? fbaInventory.getAvailable() : 0;
-            fbaInbound = fbaInventory.getInboundQty() != null ? fbaInventory.getInboundQty() : 0;
+        // FBA库存：从 fbaInventoryMap 获取（按平台分组）
+        Map<Integer, PlatformInventoryDTO> platformFbaMap = fbaInventoryMap.getOrDefault(product.getId(), Collections.emptyMap());
+        
+        // 转换为各平台FBA可用库存Map和在途库存Map
+        Map<Integer, Integer> fbaAvailableMap = new HashMap<>();
+        Map<Integer, Integer> fbaInboundMap = new HashMap<>();
+        int fbaAvailableTotal = 0;
+        int fbaInboundTotal = 0;
+        
+        for (Map.Entry<Integer, PlatformInventoryDTO> entry : platformFbaMap.entrySet()) {
+            Integer platformId = entry.getKey();
+            PlatformInventoryDTO inv = entry.getValue();
+            int available = inv.getAvailableQty() != null ? inv.getAvailableQty() : 0;
+            int inbound = inv.getInboundQty() != null ? inv.getInboundQty() : 0;
+            
+            if (available > 0) {
+                fbaAvailableMap.put(platformId, available);
+            }
+            if (inbound > 0) {
+                fbaInboundMap.put(platformId, inbound);
+            }
+            fbaAvailableTotal += available;
+            fbaInboundTotal += inbound;
         }
-        vo.setFbaAvailableQty(fbaAvailable);
-        vo.setFbaInboundQty(fbaInbound);
+        
+        vo.setFbaAvailableMap(fbaAvailableMap);
+        vo.setFbaInboundMap(fbaInboundMap);
+        vo.setFbaAvailableQty(fbaAvailableTotal);
+        vo.setFbaInboundQty(fbaInboundTotal);
 
         // 总库存 = 海外仓 + FBA
-        vo.setTotalQty(overseasTotal + fbaAvailable);
+        vo.setTotalQty(overseasTotal + fbaAvailableTotal);
+        
+        // 在途总库存 = 海外仓在途 + FBA在途
+        vo.setTotalInboundQty(overseasInbound + fbaInboundTotal);
 
         // 从 List<WarehouseSalesDTO>中获取该产品的各仓库销量，计算日均销量并转换为Map
         List<WarehouseSalesDTO> salesList = warehouseSalesByProductMap.get(product.getId());
@@ -579,8 +570,8 @@ public class SkuReportServiceImpl implements SkuReportService {
             int availableDays = (int) (vo.getTotalQty() / totalSales);
             vo.setAvailableDays(availableDays);
             
-            // 在途可销售天数 = 在途总库存 / 日均销量
-            int inboundAvailableDays = (int) (vo.getOverseasInboundQty() / totalSales);
+            // 在途可销售天数 = 在途总库存(FBA在途 + 海外仓在途) / 日均销量
+            int inboundAvailableDays = (int) (vo.getTotalInboundQty() / totalSales);
             vo.setInboundAvailableDays(inboundAvailableDays);
         } else {
             vo.setAvailableDays(0);
@@ -698,14 +689,14 @@ public class SkuReportServiceImpl implements SkuReportService {
      * @param orders 原始订单列表
      * @return 拆解后的订单列表（组合产品订单明细替换为子产品订单明细）
      */
-    private List<AmazonOrderDTO> expandBundleProductOrders(List<AmazonOrderDTO> orders) {
+    private List<PlatformOrderDTO> expandBundleProductOrders(List<PlatformOrderDTO> orders) {
         if (CollUtil.isEmpty(orders)) {
             return orders;
         }
 
         // 收集所有订单中的产品ID
         Set<Long> productIds = new HashSet<>();
-        for (AmazonOrderDTO order : orders) {
+        for (PlatformOrderDTO order : orders) {
             if (CollUtil.isNotEmpty(order.getItems())) {
                 order.getItems().forEach(item -> {
                     if (item.getLocalProductId() != null) {
@@ -736,8 +727,8 @@ public class SkuReportServiceImpl implements SkuReportService {
         }
 
         // 拆解订单明细
-        List<AmazonOrderDTO> expandedOrders = new ArrayList<>();
-        for (AmazonOrderDTO order : orders) {
+        List<PlatformOrderDTO> expandedOrders = new ArrayList<>();
+        for (PlatformOrderDTO order : orders) {
             if (CollUtil.isEmpty(order.getItems())) {
                 expandedOrders.add(order);
                 continue;
@@ -745,7 +736,7 @@ public class SkuReportServiceImpl implements SkuReportService {
 
             // 检查订单中是否包含组合产品
             boolean hasBundle = false;
-            for (AmazonOrderItemDTO item : order.getItems()) {
+            for (PlatformOrderItemDTO item : order.getItems()) {
                 if (item.getLocalProductId() != null && bundleRelationsMap.containsKey(item.getLocalProductId())) {
                     hasBundle = true;
                     break;
@@ -760,8 +751,8 @@ public class SkuReportServiceImpl implements SkuReportService {
 
             // 订单中包含组合产品，需要拆解
             // 拆解订单明细
-            List<AmazonOrderItemDTO> expandedItems = new ArrayList<>();
-            for (AmazonOrderItemDTO item : order.getItems()) {
+            List<PlatformOrderItemDTO> expandedItems = new ArrayList<>();
+            for (PlatformOrderItemDTO item : order.getItems()) {
                 Long localProductId = item.getLocalProductId();
                 if (localProductId == null) {
                     continue;
@@ -774,17 +765,17 @@ public class SkuReportServiceImpl implements SkuReportService {
                     expandedItems.add(item);
                 } else {
                     // 组合产品：拆解为子产品
-                    Integer bundleQty = item.getQuantityOrdered();
+                    Integer bundleQty = item.getQuantity();
                     if (bundleQty == null || bundleQty <= 0) {
                         continue;
                     }
 
                     for (ProductBundleRelationDO relation : relations) {
                         // 创建子产品订单明细
-                        AmazonOrderItemDTO subItem = new AmazonOrderItemDTO();
+                        PlatformOrderItemDTO subItem = new PlatformOrderItemDTO();
                         subItem.setLocalProductId(relation.getSubProductId());
                         // 子产品数量 = 组合产品数量 * 配比数量
-                        subItem.setQuantityOrdered(bundleQty * relation.getQuantity());
+                        subItem.setQuantity(bundleQty * relation.getQuantity());
 
                         expandedItems.add(subItem);
                     }

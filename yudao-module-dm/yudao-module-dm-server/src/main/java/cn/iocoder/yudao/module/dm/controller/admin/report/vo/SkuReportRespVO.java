@@ -35,11 +35,17 @@ public class SkuReportRespVO {
     
     // ========== FBA库存 ==========
     
-    @Schema(description = "FBA可用库存", example = "400")
+    @Schema(description = "各平台FBA可用库存 Map<平台ID, 库存数量>", example = "{60: 400, 50: 200}")
+    private Map<Integer, Integer> fbaAvailableMap;
+    
+    @Schema(description = "各平台FBA在途库存 Map<平台ID, 在途数量>", example = "{60: 20, 50: 10}")
+    private Map<Integer, Integer> fbaInboundMap;
+    
+    @Schema(description = "FBA可用库存合计", example = "600")
     @ExcelProperty("FBA")
     private Integer fbaAvailableQty;
     
-    @Schema(description = "FBA在途库存", example = "20")
+    @Schema(description = "FBA在途库存合计", example = "30")
     @ExcelProperty("FBA在途库存")
     private Integer fbaInboundQty;
     
@@ -54,16 +60,20 @@ public class SkuReportRespVO {
     // ========== 统计信息 ==========
     
     @Schema(description = "海外仓总库存", example = "400")
-    @ExcelProperty("总库存")
+    @ExcelProperty("海外仓库存")
     private Integer overseasTotalQty;
     
     @Schema(description = "海外仓在途总库存", example = "80")
-    @ExcelProperty("在途总库存")
+    @ExcelProperty("海外仓在途")
     private Integer overseasInboundQty;
     
     @Schema(description = "总库存(海外仓 + FBA)", example = "800")
-    @ExcelProperty("库存可销售天")
+    @ExcelProperty("总库存")
     private Integer totalQty;
+    
+    @Schema(description = "在途总库存(海外仓在途 + FBA在途)", example = "110")
+    @ExcelProperty("在途总库存")
+    private Integer totalInboundQty;
     
     @Schema(description = "库存可销售天数(最大显示90)", example = "134")
     @ExcelProperty("库存可销售天数")
