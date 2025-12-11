@@ -37,4 +37,8 @@ public interface DmShopMappingQueryService {
     @GetMapping(PREFIX + "/getAllAvailable")
     @Operation(summary = "查询所有可用的门店映射信息")
     CommonResult<List<ShopMappingDTO>> getAllAvailableShopMappings();
+
+    @GetMapping(PREFIX + "/getAllByTenant")
+    @Operation(summary = "查询当前租户所有门店映射信息")
+    CommonResult<List<ShopMappingDTO>> getAllShopByTenant();
 }

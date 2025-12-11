@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.dm.rpc;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.dm.api.DmShopMappingQueryService;
 import cn.iocoder.yudao.module.dm.dal.dataobject.ozonshopmapping.OzonShopMappingDO;
 import cn.iocoder.yudao.module.dm.dto.ShopMappingDTO;
@@ -100,4 +101,14 @@ public class DmShopMappingQueryServiceImpl implements DmShopMappingQueryService 
             return CommonResult.success(Collections.emptyList());
         }
     }
-} 
+
+    @Override
+    public CommonResult<List<ShopMappingDTO>> getAllShopByTenant() {
+        List<OzonShopMappingDO> ozonShopList = ozonShopMappingService.getOzonShopList();
+        if (ozonShopList == null || ozonShopList.isEmpty()) {
+            return CommonResult.success(Collections.emptyList());
+        }
+
+        return CommonResult.success(BeanUtils.toBean(ozonShopList, ShopMappingDTO.class));
+    }
+}
