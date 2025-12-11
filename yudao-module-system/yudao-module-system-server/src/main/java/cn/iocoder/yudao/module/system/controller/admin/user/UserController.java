@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
 import cn.iocoder.yudao.module.system.convert.user.UserConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
@@ -134,6 +136,13 @@ public class UserController {
         // 拼接数据
         DeptDO dept = deptService.getDept(user.getDeptId());
         return success(UserConvert.INSTANCE.convert(user, dept));
+    }
+
+    @GetMapping("/get/subordinate")
+    @Operation(summary = "获取下属")
+    public CommonResult<List<AdminUserRespDTO>> getSubordinateUser() {
+        List<AdminUserDO> users = userService.getUserListByDataPermission();
+        return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
     }
 
     @GetMapping("/export-excel")

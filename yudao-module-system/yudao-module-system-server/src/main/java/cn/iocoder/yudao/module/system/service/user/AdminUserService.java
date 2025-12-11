@@ -203,6 +203,12 @@ public interface AdminUserService {
     List<AdminUserDO> getUserListByStatus(Integer status);
 
     /**
+     * 根据数据权限查询用户列表
+     * @return
+     */
+    List<AdminUserDO> getUserListByDataPermission();
+
+    /**
      * 判断密码是否匹配
      *
      * @param rawPassword 未加密的密码

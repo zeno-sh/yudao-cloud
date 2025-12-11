@@ -50,6 +50,10 @@ public interface AdminUserApi extends AutoTransable<AdminUserRespDTO> {
     @Parameter(name = "postIds", description = "岗位编号数组", example = "2,3", required = true)
     CommonResult<List<AdminUserRespDTO>> getUserListByPostIds(@RequestParam("postIds") Collection<Long> postIds);
 
+    @GetMapping(PREFIX + "/list-by-data-permissions")
+    @Operation(summary = "根据数据权限获取用户列表")
+    CommonResult<List<AdminUserRespDTO>> getUserListByDataPermissions();
+
     /**
      * 获得用户 Map
      *

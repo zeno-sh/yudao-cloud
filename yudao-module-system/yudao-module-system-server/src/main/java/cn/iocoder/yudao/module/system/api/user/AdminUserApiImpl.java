@@ -86,6 +86,12 @@ public class AdminUserApiImpl implements AdminUserApi {
     }
 
     @Override
+    public CommonResult<List<AdminUserRespDTO>> getUserListByDataPermissions() {
+        List<AdminUserDO> users = userService.getUserListByDataPermission();
+        return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
+    }
+
+    @Override
     public CommonResult<Boolean> validateUserList(Collection<Long> ids) {
         userService.validateUserList(ids);
         return success(true);
