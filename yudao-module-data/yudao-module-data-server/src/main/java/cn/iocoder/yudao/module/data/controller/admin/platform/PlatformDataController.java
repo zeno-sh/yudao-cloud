@@ -1,7 +1,11 @@
 package cn.iocoder.yudao.module.data.controller.admin.platform;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.data.service.platform.PlatformDataAggregateService;
+import cn.iocoder.yudao.module.data.service.platform.PlatformProductAggregateService;
+import cn.iocoder.yudao.module.platform.common.dto.ProductStatisticsDTO;
+import cn.iocoder.yudao.module.platform.common.dto.ProductStatisticsQueryDTO;
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsDTO;
 import cn.iocoder.yudao.module.platform.common.dto.ShopStatisticsQueryDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +25,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 /**
  * 多平台数据聚合 Controller
  * <p>
- * 统一入口，聚合查询各电商平台（Amazon、Coupang、Ozon等）的店铺统计数据
+ * 统一入口，聚合查询各电商平台（Amazon、Coupang、Ozon等）的店铺和产品统计数据
  * </p>
  *
  * @author Jax
@@ -35,16 +39,38 @@ public class PlatformDataController {
     @Resource
     private PlatformDataAggregateService aggregateService;
 
+    @Resource
+    private PlatformProductAggregateService productAggregateService;
+
+    // ==================== 平台信息 ====================
+
     @GetMapping("/registered-platforms")
-    @Operation(summary = "获取所有已注册的平台")
+    @Operation(summary = "获取所有已注册的平台（店铺维度）")
     public CommonResult<List<Integer>> getRegisteredPlatforms() {
         return success(aggregateService.getRegisteredPlatformIds());
     }
+
+    @GetMapping("/product/registered-platforms")
+    @Operation(summary = "获取所有已注册的平台（产品维度）")
+    public CommonResult<List<Integer>> getProductRegisteredPlatforms() {
+        return success(productAggregateService.getRegisteredPlatformIds());
+    }
+
+    // ==================== 店铺统计 ====================
 
     @PostMapping("/shop-statistics/list")
     @Operation(summary = "查询多平台店铺统计数据")
     public CommonResult<List<ShopStatisticsDTO>> listShopStatistics(@RequestBody ShopStatisticsQueryDTO queryDTO) {
         return success(aggregateService.getShopStatistics(queryDTO));
+    }
+
+    // ==================== 产品统计 ====================
+
+    @PostMapping("/product-statistics/page")
+    @Operation(summary = "分页查询产品统计数据")
+    public CommonResult<PageResult<ProductStatisticsDTO>> pageProductStatistics(
+            @RequestBody ProductStatisticsQueryDTO queryDTO) {
+        return success(productAggregateService.getProductStatistics(queryDTO));
     }
 
 }

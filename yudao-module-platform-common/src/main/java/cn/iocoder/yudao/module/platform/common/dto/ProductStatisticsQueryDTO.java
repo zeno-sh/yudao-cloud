@@ -14,6 +14,10 @@ import java.util.List;
  * <p>
  * 多平台产品维度统计数据查询的统一入参
  * </p>
+ * <p>
+ * 注意：searchType 和 orderBy 使用 String 类型传递，符合行业最佳实践：
+ * 前端传 String，后端用枚举处理业务逻辑
+ * </p>
  *
  * @author Jax
  */
@@ -45,16 +49,16 @@ public class ProductStatisticsQueryDTO implements Serializable {
 
     // ==================== 搜索条件 ====================
 
-    @Schema(description = "搜索类型", example = "asin")
-    private ProductSearchTypeEnum searchType;
+    @Schema(description = "搜索类型: asin/parentAsin/msku/sku", example = "asin")
+    private String searchType;
 
     @Schema(description = "搜索内容列表", example = "[\"B08N5WRWNW\"]")
     private List<String> searchContentList;
 
     // ==================== 排序条件 ====================
 
-    @Schema(description = "排序字段，默认按销量排序", example = "saleNum")
-    private ProductOrderByEnum orderBy;
+    @Schema(description = "排序字段: saleNum/salePrice/profit/profitRate/adTotalCost/adSalesPrice/acos/refundNum/refundRate", example = "saleNum")
+    private String orderBy;
 
     @Schema(description = "是否降序，默认true", example = "true")
     private Boolean desc = Boolean.TRUE;
@@ -70,17 +74,17 @@ public class ProductStatisticsQueryDTO implements Serializable {
     // ==================== 便捷方法 ====================
 
     /**
-     * 获取搜索类型编码（用于API调用）
+     * 获取搜索类型枚举
      */
-    public String getSearchTypeCode() {
-        return searchType != null ? searchType.getCode() : null;
+    public ProductSearchTypeEnum getSearchTypeEnum() {
+        return ProductSearchTypeEnum.getByCode(searchType);
     }
 
     /**
-     * 获取排序字段编码（用于API调用）
+     * 获取排序字段枚举
      */
-    public String getOrderByCode() {
-        return orderBy != null ? orderBy.getCode() : ProductOrderByEnum.SALE_NUM.getCode();
+    public ProductOrderByEnum getOrderByEnum() {
+        return ProductOrderByEnum.getByCode(orderBy);
     }
 
     /**

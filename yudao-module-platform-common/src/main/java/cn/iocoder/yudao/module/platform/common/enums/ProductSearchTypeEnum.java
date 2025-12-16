@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.platform.common.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -46,9 +48,18 @@ public enum ProductSearchTypeEnum {
     private final String description;
 
     /**
-     * 根据编码获取枚举
+     * JSON 序列化时返回 code
      */
-    public static ProductSearchTypeEnum getByCode(String code) {
+    @JsonValue
+    public String getCode() {
+        return code;
+    }
+
+    /**
+     * JSON 反序列化时根据 code 获取枚举
+     */
+    @JsonCreator
+    public static ProductSearchTypeEnum fromCode(String code) {
         if (code == null || code.isEmpty()) {
             return null;
         }
@@ -58,6 +69,13 @@ public enum ProductSearchTypeEnum {
             }
         }
         return null;
+    }
+
+    /**
+     * 根据编码获取枚举
+     */
+    public static ProductSearchTypeEnum getByCode(String code) {
+        return fromCode(code);
     }
 
 }

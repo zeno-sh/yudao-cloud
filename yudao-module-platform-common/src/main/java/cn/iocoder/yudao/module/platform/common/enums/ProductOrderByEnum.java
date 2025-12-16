@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.platform.common.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -71,9 +73,18 @@ public enum ProductOrderByEnum {
     private final String description;
 
     /**
-     * 根据编码获取枚举
+     * JSON 序列化时返回 code
      */
-    public static ProductOrderByEnum getByCode(String code) {
+    @JsonValue
+    public String getCode() {
+        return code;
+    }
+
+    /**
+     * JSON 反序列化时根据 code 获取枚举
+     */
+    @JsonCreator
+    public static ProductOrderByEnum fromCode(String code) {
         if (code == null || code.isEmpty()) {
             return SALE_NUM; // 默认按销量排序
         }
@@ -83,6 +94,13 @@ public enum ProductOrderByEnum {
             }
         }
         return SALE_NUM;
+    }
+
+    /**
+     * 根据编码获取枚举
+     */
+    public static ProductOrderByEnum getByCode(String code) {
+        return fromCode(code);
     }
 
 }
