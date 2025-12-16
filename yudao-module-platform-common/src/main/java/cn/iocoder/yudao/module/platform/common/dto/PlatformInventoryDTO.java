@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Schema(description = "平台库存数据")
 public class PlatformInventoryDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -964176462599156030L;
 
     // ==================== 基础信息 ====================
 

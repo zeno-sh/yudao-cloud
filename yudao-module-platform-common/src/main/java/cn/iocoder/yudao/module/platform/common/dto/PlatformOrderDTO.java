@@ -22,7 +22,7 @@ import java.util.List;
 @Schema(description = "平台订单数据")
 public class PlatformOrderDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 478945115943324940L;
 
     // ==================== 基础信息 ====================
 

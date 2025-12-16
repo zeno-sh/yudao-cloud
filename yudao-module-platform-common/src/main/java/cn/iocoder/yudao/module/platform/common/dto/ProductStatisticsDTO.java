@@ -6,26 +6,30 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
- * 店铺统计数据 DTO
+ * 产品统计数据 DTO
  * <p>
- * 统一的多平台店铺数据结构，各平台（Amazon、Coupang、Ozon等）必须返回此格式
+ * 统一的多平台产品维度数据结构，各平台（Amazon、Coupang、Ozon等）必须返回此格式
  * </p>
  *
  * @author Jax
  */
 @Data
 @Accessors(chain = true)
-@Schema(description = "店铺统计数据")
-public class ShopStatisticsDTO implements Serializable {
+@Schema(description = "产品统计数据")
+public class ProductStatisticsDTO implements Serializable {
 
-    private static final long serialVersionUID = 8593793292791390443L;
+    private static final long serialVersionUID = -3541141331462764720L;
 
     // ==================== 基础信息 ====================
 
     @Schema(description = "平台ID", example = "10")
     private Integer platformId;
+
+    @Schema(description = "平台名称", example = "Amazon")
+    private String platformName;
 
     @Schema(description = "店铺ID", example = "123456")
     private String shopId;
@@ -33,17 +37,37 @@ public class ShopStatisticsDTO implements Serializable {
     @Schema(description = "店铺名称", example = "我的店铺")
     private String shopName;
 
-    @Schema(description = "平台名称", example = "Amazon")
-    private String platformName;
-
     @Schema(description = "站点ID", example = "ATVPDKIKX0DER")
     private String marketplaceId;
+
+    @Schema(description = "站点名称", example = "美国站")
+    private String marketplaceName;
+
+    @Schema(description = "币种", example = "USD")
+    private String currency;
 
     @Schema(description = "日期", example = "2024-01-01")
     private String nowDate;
 
-    @Schema(description = "币种", example = "USD")
-    private String currency;
+    // ==================== 产品信息 ====================
+
+    @Schema(description = "父ASIN", example = "B08N5WRWNW")
+    private String parentAsin;
+
+    @Schema(description = "ASIN", example = "B08N5WRK9N")
+    private List<String> asinList;
+
+    @Schema(description = "商家SKU", example = "SKU-001")
+    private String msku;
+
+    @Schema(description = "本地SKU", example = "LOCAL-001")
+    private String sku;
+
+    @Schema(description = "产品名称", example = "无线蓝牙耳机")
+    private String productName;
+
+    @Schema(description = "产品图片URL", example = "https://example.com/image.jpg")
+    private String imageUrl;
 
     // ==================== 销售数据 ====================
 
@@ -56,10 +80,16 @@ public class ShopStatisticsDTO implements Serializable {
     @Schema(description = "销售额")
     private BigDecimal salePrice;
 
+    @Schema(description = "单价")
+    private BigDecimal unitPrice;
+
     // ==================== 退款/退货数据 ====================
 
     @Schema(description = "退款量")
     private BigDecimal refundNum;
+
+    @Schema(description = "退款额")
+    private BigDecimal refundPrice;
 
     @Schema(description = "退款率")
     private BigDecimal refundRate;
@@ -89,20 +119,20 @@ public class ShopStatisticsDTO implements Serializable {
     @Schema(description = "广告点击量")
     private BigDecimal adClicks;
 
-    @Schema(description = "广告转化率")
-    private BigDecimal adConvertRate;
-
     @Schema(description = "广告点击率")
     private BigDecimal adClickRate;
+
+    @Schema(description = "广告转化率")
+    private BigDecimal adConvertRate;
 
     @Schema(description = "广告花费")
     private BigDecimal adCostSum;
 
-    @Schema(description = "平均转化费(CPA)")
-    private BigDecimal cpa;
-
     @Schema(description = "CPC(每次点击成本)")
     private BigDecimal cpc;
+
+    @Schema(description = "CPA(平均转化费)")
+    private BigDecimal cpa;
 
     @Schema(description = "广告订单量")
     private BigDecimal adOrderNum;
@@ -116,32 +146,21 @@ public class ShopStatisticsDTO implements Serializable {
     @Schema(description = "ACoS(广告成本销售比)")
     private BigDecimal acos;
 
-    @Schema(description = "ACoAS")
-    private BigDecimal acoas;
-
-    @Schema(description = "ASoAS")
-    private BigDecimal asoas;
-
-    @Schema(description = "ROAS(广告投资回报率)")
-    private BigDecimal roas;
-
-    // ==================== 成本/利润数据 ====================
-
-    @Schema(description = "采购成本")
-    private BigDecimal purchaseCost;
-
-    @Schema(description = "头程费用")
-    private BigDecimal headTripPrice;
-
-    @Schema(description = "毛利润")
-    private BigDecimal profit;
-
-    @Schema(description = "毛利率")
-    private BigDecimal profitRate;
+    @Schema(description = "TACoS")
+    private BigDecimal tacos;
 
     // ==================== 库存数据 ====================
 
     @Schema(description = "FBA可售库存")
-    private BigDecimal fbaAvailable;
+    private Integer fbaAvailable;
+
+    @Schema(description = "FBM可售库存")
+    private Integer fbmAvailable;
+
+    @Schema(description = "总可售库存")
+    private Integer totalAvailable;
+
+    @Schema(description = "预计可售天数")
+    private Integer availableDays;
 
 }

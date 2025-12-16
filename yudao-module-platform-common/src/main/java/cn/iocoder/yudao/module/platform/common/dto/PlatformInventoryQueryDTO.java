@@ -17,7 +17,7 @@ import java.util.List;
 @Schema(description = "平台库存查询条件")
 public class PlatformInventoryQueryDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -4723506835256849362L;
 
     @Schema(description = "店铺ID列表", example = "[\"123456\"]")
     private List<String> shopIds;

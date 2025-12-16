@@ -17,7 +17,7 @@ import java.util.List;
 @Schema(description = "店铺统计数据查询条件")
 public class ShopStatisticsQueryDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 6049331350805145019L;
 
     @Schema(description = "平台ID列表，为空则查询所有平台", example = "[50, 60]")
     private List<Integer> platformIds;

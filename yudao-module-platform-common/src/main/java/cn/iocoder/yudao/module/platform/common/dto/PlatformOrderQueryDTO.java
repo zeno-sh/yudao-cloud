@@ -18,7 +18,7 @@ import java.util.List;
 @Schema(description = "平台订单查询条件")
 public class PlatformOrderQueryDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -5535540618859429224L;
 
     @Schema(description = "店铺ID列表", example = "[\"123456\"]")
     private List<String> shopIds;

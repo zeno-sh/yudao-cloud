@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Schema(description = "平台订单商品明细")
 public class PlatformOrderItemDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 4311463467229988530L;
 
     @Schema(description = "平台商品SKU（如亚马逊的SellerSku）", example = "ABC-123")
     private String platformSku;
