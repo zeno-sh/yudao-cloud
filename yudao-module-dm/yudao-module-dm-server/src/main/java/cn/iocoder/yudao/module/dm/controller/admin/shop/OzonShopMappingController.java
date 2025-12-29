@@ -93,7 +93,8 @@ public class OzonShopMappingController {
     @GetMapping("/page")
     @Operation(summary = "获得ozon店铺分页")
     @PreAuthorize("@ss.hasPermission('dm:ozon-shop-mapping:query')")
-    public CommonResult<PageResult<OzonShopMappingRespVO>> getOzonShopMappingPage(@Valid OzonShopMappingPageReqVO pageReqVO) {
+    public CommonResult<PageResult<OzonShopMappingRespVO>> getOzonShopMappingPage(
+            @Valid OzonShopMappingPageReqVO pageReqVO) {
         PageResult<OzonShopMappingDO> pageResult = ozonShopMappingService.getOzonShopMappingPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, OzonShopMappingRespVO.class));
     }
@@ -103,19 +104,27 @@ public class OzonShopMappingController {
     @PreAuthorize("@ss.hasPermission('dm:ozon-shop-mapping:export')")
     @ApiAccessLog(operateType = EXPORT)
     public void exportOzonShopMappingExcel(@Valid OzonShopMappingPageReqVO pageReqVO,
-              HttpServletResponse response) throws IOException {
+            HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<OzonShopMappingDO> list = ozonShopMappingService.getOzonShopMappingPage(pageReqVO).getList();
         // 导出 Excel
         ExcelUtils.write(response, "ozon店铺.xls", "数据", OzonShopMappingRespVO.class,
-                        BeanUtils.toBean(list, OzonShopMappingRespVO.class));
+                BeanUtils.toBean(list, OzonShopMappingRespVO.class));
     }
 
-    @GetMapping({"/list-all-simple", "/simple-list"})
+    @GetMapping({ "/list-all-simple", "/simple-list" })
     @Operation(summary = "获取授权门店列表", description = "只包含被门店ID，门店名称，主要用于前端的下拉选项")
     public CommonResult<List<OzonShopRespVO>> getSimpleRoleList() {
         List<OzonShopMappingDO> ozonShopList = ozonShopMappingService.getOzonShopList();
         return success(BeanUtils.toBean(ozonShopList, OzonShopRespVO.class));
+    }
+
+    @PostMapping("/sync")
+    @Operation(summary = "同步ozon店铺")
+    @PreAuthorize("@ss.hasPermission('dm:ozon-shop-mapping:sync')")
+    public CommonResult<Boolean> syncOzonShopMapping() {
+        ozonShopMappingService.syncOzonShop();
+        return success(true);
     }
 
 }

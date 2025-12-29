@@ -98,4 +98,9 @@ public interface OzonShopMappingService {
      * @return
      */
     Map<String, ClientSimpleInfoDTO> batchSimpleInfoByClientIds(List<String> clientIds);
+
+    /**
+     * 同步ozon店铺
+     */
+    void syncOzonShop();
 }

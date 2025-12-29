@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.dm.service.ozonshopmapping;
 
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
-import cn.iocoder.yudao.module.dm.controller.admin.product.vo.ProductSimpleInfoVO;
-import cn.iocoder.yudao.module.dm.dal.dataobject.product.ProductInfoDO;
+
 import cn.iocoder.yudao.module.dm.infrastructure.ozon.dto.ClientSimpleInfoDTO;
+import cn.iocoder.yudao.module.sellfox.api.shop.SellfoxShopApi;
+import cn.iocoder.yudao.module.sellfox.api.shop.dto.PageShopRespDTO;
+import cn.iocoder.yudao.module.sellfox.api.shop.dto.ShopAuthOpenListDTO;
+import cn.iocoder.yudao.module.sellfox.api.shop.dto.ShopPageReqDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import org.apache.commons.collections4.CollectionUtils;
@@ -25,7 +29,7 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.dm.dal.mysql.ozonshopmapping.OzonShopMappingMapper;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.convertMap;
+
 import static cn.iocoder.yudao.module.dm.enums.ErrorCodeConstants.*;
 
 /**
@@ -106,7 +110,6 @@ public class OzonShopMappingServiceImpl implements OzonShopMappingService {
                 })
                 .collect(Collectors.toList());
 
-
         return platformGroups;
     }
 
@@ -152,9 +155,62 @@ public class OzonShopMappingServiceImpl implements OzonShopMappingService {
         return ozonShopMappingMapper.selectList(OzonShopMappingDO::getClientId, clientIds);
     }
 
+    @Resource
+    private SellfoxShopApi sellfoxShopApi;
+
+    @Override
+    public void syncOzonShop() {
+        int pageNo = 1;
+        int pageSize = 50;
+        for (;;) {
+            // 1. 调用 RPC
+            ShopPageReqDTO reqDTO = new ShopPageReqDTO();
+            reqDTO.setPageNo(String.valueOf(pageNo));
+            reqDTO.setPageSize(String.valueOf(pageSize));
+            CommonResult<PageShopRespDTO> result = sellfoxShopApi
+                    .getShopPageList(reqDTO);
+            PageShopRespDTO pageResult = result.getCheckedData();
+            if (pageResult == null || CollectionUtils.isEmpty(pageResult.getRows())) {
+                break;
+            }
+
+            // 2. 遍历处理
+            for (ShopAuthOpenListDTO dto : pageResult.getRows()) {
+                // 校验是否存在
+                OzonShopMappingDO existDO = getOzonShopMappingByClientId(dto.getId());
+                if (existDO != null) {
+                    continue;
+                }
+                // 不存在则保存
+                OzonShopMappingDO newDO = new OzonShopMappingDO();
+                newDO.setClientId(dto.getId());
+                newDO.setShopName(dto.getName());
+                // 获取平台ID，假设字典标签为 "亚马逊"
+                String platformValue = DictFrameworkUtils.parseDictDataValue("dm_platform", "亚马逊");
+                newDO.setPlatform(Integer.parseInt(platformValue));
+                // 其他字段默认值?
+                newDO.setApiKey("123");
+                newDO.setAuthStatus(10); // 正常?
+                ozonShopMappingMapper.insert(newDO);
+            }
+
+            // 3. 判断是否继续
+            if (pageResult.getRows().size() < pageSize) {
+                break;
+            }
+            pageNo++;
+            try {
+                Thread.sleep(1000); // 1s 一个请求
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
     @Override
     public Map<String, ClientSimpleInfoDTO> batchSimpleInfoByClientIds(List<String> clientIds) {
-        List<OzonShopMappingDO> ozonShopMappingDOList = ozonShopMappingMapper.selectList(OzonShopMappingDO::getClientId, clientIds);
+        List<OzonShopMappingDO> ozonShopMappingDOList = ozonShopMappingMapper.selectList(OzonShopMappingDO::getClientId,
+                clientIds);
         if (CollectionUtils.isEmpty(ozonShopMappingDOList)) {
             return Collections.emptyMap();
         }
@@ -167,7 +223,8 @@ public class OzonShopMappingServiceImpl implements OzonShopMappingService {
                             clientSimpleInfoDTO.setClientId(ozonShopMappingDO.getClientId());
                             clientSimpleInfoDTO.setShopName(ozonShopMappingDO.getShopName());
                             clientSimpleInfoDTO.setPlatform(ozonShopMappingDO.getPlatform());
-                            clientSimpleInfoDTO.setPlatformName(DictFrameworkUtils.parseDictDataValue("dm_platform", String.valueOf(ozonShopMappingDO.getPlatform())));
+                            clientSimpleInfoDTO.setPlatformName(DictFrameworkUtils.parseDictDataValue("dm_platform",
+                                    String.valueOf(ozonShopMappingDO.getPlatform())));
 
                             return clientSimpleInfoDTO;
                         },
