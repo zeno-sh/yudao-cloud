@@ -39,6 +39,9 @@ public class ProductStatisticsQueryDTO implements Serializable {
     @Schema(description = "站点ID列表", example = "[\"ATVPDKIKX0DER\"]")
     private List<String> marketplaceIds;
 
+    @Schema(description = "币种", example = "USD")
+    private String currency;
+
     // ==================== 时间范围 ====================
 
     @Schema(description = "开始日期", example = "2024-01-01")
