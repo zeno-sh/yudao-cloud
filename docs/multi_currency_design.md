@@ -21,17 +21,7 @@
     *   `status`: 状态 (开启/禁用)
 
 ### 2.2 租户汇率表 (`dm_exchange_rates`)
-*   **库**: `maipro-base`
-*   **用途**: 存储每个租户的汇率数据。
-*   **结构**:
-    *   `id`: 主键
-    *   `tenant_id`: 租户ID (隔离不同租户的配置)
-    *   `currency_code`: 目标货币代码 (关联 `system_currency.currency_code`)
-    *   `official_rate`: 官方汇率 (外部API更新，基准: 1外币 = X人民币，保留4位小数)
-    *   `custom_rate`: 自定义汇率 (用户手动设置，业务优先使用，保留4位小数)
-    *   `base_currency`: **[已废弃]**
-    *   `target_currency`: **[已废弃]**
-    *   `update_time`: 更新时间
+已经有了
 
 
 ## 3. 核心流程设计
