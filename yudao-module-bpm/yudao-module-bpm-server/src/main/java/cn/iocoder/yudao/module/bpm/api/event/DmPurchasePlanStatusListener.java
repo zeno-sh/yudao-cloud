@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmHttpRequestUtils;
 import cn.iocoder.yudao.module.infra.api.config.ConfigApi;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
@@ -16,6 +17,7 @@ import javax.validation.Valid;
  * @author Zeno
  */
 @RequiredArgsConstructor
+@Slf4j
 public class DmPurchasePlanStatusListener extends BpmProcessInstanceStatusEventListener {
 
     private static final String PROCESS_KEY = "dm_bpm_purchase_plan_flow";
@@ -31,6 +33,7 @@ public class DmPurchasePlanStatusListener extends BpmProcessInstanceStatusEventL
 
     @Override
     public void onEvent(@RequestBody @Valid BpmProcessInstanceStatusEvent event) {
+        log.info("审批流程监听：businessKey={}, status={}", event.getBusinessKey(), event.getStatus());
         BpmHttpRequestUtils.executeBpmHttpRequest(event,
                 "http://dm-server/rpc-api/dm/purchase-plan/update-audit-status");
     }
