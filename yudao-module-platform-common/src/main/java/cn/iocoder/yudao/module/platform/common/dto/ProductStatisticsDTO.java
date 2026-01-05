@@ -80,6 +80,9 @@ public class ProductStatisticsDTO implements Serializable {
     @Schema(description = "销售额")
     private BigDecimal salePrice;
 
+    @Schema(description = "净销售额=销售额-商品折扣+FBM买家运费")
+    private BigDecimal salesPriceNet;
+
     @Schema(description = "单价")
     private BigDecimal unitPrice;
 

@@ -8,7 +8,7 @@ import cn.iocoder.yudao.module.dm.dto.ShopMappingDTO;
 import cn.iocoder.yudao.module.platform.common.api.PlatformProductStatisticsApi;
 import cn.iocoder.yudao.module.platform.common.dto.ProductStatisticsDTO;
 import cn.iocoder.yudao.module.platform.common.dto.ProductStatisticsQueryDTO;
-import cn.iocoder.yudao.module.sellfox.api.product.AmazonProductApi;
+import cn.iocoder.yudao.module.sellfox.api.statistics.AmazonProductApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
