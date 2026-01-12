@@ -114,6 +114,21 @@ public class ProductStatisticsDTO implements Serializable {
     @Schema(description = "转化率")
     private BigDecimal convertRate;
 
+    @Schema(description = "星级评分")
+    private BigDecimal rating;
+
+    @Schema(description = "评分数")
+    private Integer ratingCount;
+
+    @Schema(description = "中差评数量")
+    private Integer lowReviewNum;
+
+    @Schema(description = "自然订单量")
+    private Integer naturalOrderNum;
+
+    @Schema(description = "自然订单量占比")
+    private BigDecimal naturalOrderNumPercent;
+
     // ==================== 广告数据 ====================
 
     @Schema(description = "广告曝光量")

@@ -52,19 +52,26 @@ public class ProductStatisticsQueryDTO implements Serializable {
 
     // ==================== 搜索条件 ====================
 
+    @Schema(description = "数据聚合维度,默认1 (1:asin; 2:parentAsin; 3:msku; 4:sku; 5:spu)", example = "asin")
+    private String asinType;
+
     @Schema(description = "搜索类型: asin/parentAsin/msku/sku", example = "asin")
     private String searchType;
 
     @Schema(description = "搜索内容列表", example = "[\"B08N5WRWNW\"]")
     private List<String> searchContentList;
 
+
     // ==================== 排序条件 ====================
 
-    @Schema(description = "排序字段: saleNum/salePrice/profit/profitRate/adTotalCost/adSalesPrice/acos/refundNum/refundRate", example = "saleNum")
+    @Schema(description = "默认按销量", example = "saleNum")
     private String orderBy;
 
     @Schema(description = "是否降序，默认true", example = "true")
     private Boolean desc = Boolean.TRUE;
+
+    @Schema(description = "合并", example = "true")
+    private Boolean mergeAsin = Boolean.TRUE;
 
     // ==================== 分页参数 ====================
 
