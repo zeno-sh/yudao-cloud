@@ -4,9 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -26,9 +24,6 @@ public class ExchangeRateApiClientImpl implements ExchangeRateApiClient {
 
     private static final String API_URL = "http://1.117.17.136:9800/v1/latest";
 
-    @Resource
-    private RestTemplate restTemplate;
-
     @Override
     public Map<String, BigDecimal> getLatestRates(List<String> currencyCodes) {
         if (CollUtil.isEmpty(currencyCodes)) {
@@ -41,10 +36,18 @@ public class ExchangeRateApiClientImpl implements ExchangeRateApiClient {
             String url = API_URL + "?base=CNY&symbols=" + symbols;
             log.info("[getLatestRates] 调用外部汇率 API: {}", url);
 
-            // 调用 API
-            ExchangeRateApiResponse response = restTemplate.getForObject(url, ExchangeRateApiResponse.class);
+            // 调用 API (使用 Hutool HttpUtil)
+            String responseBody = cn.hutool.http.HttpUtil.get(url);
+            if (responseBody == null) {
+                log.warn("[getLatestRates] API 返回为空");
+                return Collections.emptyMap();
+            }
+
+            // 解析响应 (使用 FastJSON)
+            ExchangeRateApiResponse response = com.alibaba.fastjson2.JSON.parseObject(responseBody,
+                    ExchangeRateApiResponse.class);
             if (response == null || response.getRates() == null) {
-                log.warn("[getLatestRates] API 返回为空，将使用默认值");
+                log.warn("[getLatestRates] API 返回解析失败或 rates 为空");
                 return Collections.emptyMap();
             }
 

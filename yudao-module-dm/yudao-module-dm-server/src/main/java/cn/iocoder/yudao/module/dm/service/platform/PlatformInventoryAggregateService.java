@@ -5,7 +5,7 @@ import cn.iocoder.yudao.module.platform.common.api.PlatformInventoryApi;
 import cn.iocoder.yudao.module.platform.common.dto.PlatformInventoryDTO;
 import cn.iocoder.yudao.module.platform.common.dto.PlatformInventoryQueryDTO;
 import cn.iocoder.yudao.module.platform.common.enums.FulfillmentTypeEnum;
-import cn.iocoder.yudao.module.sellfox.api.platform.AmazonInventoryApi;
+import cn.iocoder.yudao.module.sellfox.api.statistics.AmazonInventoryApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

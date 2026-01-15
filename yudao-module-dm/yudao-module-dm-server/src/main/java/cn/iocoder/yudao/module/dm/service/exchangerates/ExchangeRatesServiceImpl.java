@@ -16,6 +16,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import cn.iocoder.yudao.module.dm.controller.admin.exchangerates.vo.*;
 import cn.iocoder.yudao.module.dm.dal.dataobject.exchangerates.ExchangeRatesDO;
+import cn.iocoder.yudao.module.system.api.currency.CurrencyApi;
+import cn.iocoder.yudao.module.system.api.currency.dto.CurrencyRespDTO;
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -90,6 +93,9 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService {
     @Resource
     private ExchangeRateApiClient exchangeRateApiClient;
 
+    @Resource
+    private CurrencyApi currencyApi;
+
     @Override
     public void batchInitExchangeRates(Long tenantId, List<String> currencyCodes) {
         if (CollUtil.isEmpty(currencyCodes)) {
@@ -122,49 +128,55 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int syncOfficialExchangeRates() {
-        // 1. 获取当前租户下所有汇率记录
-        List<ExchangeRatesDO> exchangeRatesList = getAllExchangeRates();
-        if (CollUtil.isEmpty(exchangeRatesList)) {
-            log.warn("[syncOfficialExchangeRates] 当前租户无汇率记录，跳过同步");
+        // 1. 获取系统启用的币种列表
+        CommonResult<List<CurrencyRespDTO>> enableCurrenciesResult = currencyApi.getEnabledCurrencyList();
+        if (enableCurrenciesResult.isError()) {
+            log.error("[syncOfficialExchangeRates] 获取启用币种失败: {}", enableCurrenciesResult.getMsg());
+            return 0;
+        }
+        List<CurrencyRespDTO> enableCurrencies = enableCurrenciesResult.getData();
+        if (CollUtil.isEmpty(enableCurrencies)) {
+            log.warn("[syncOfficialExchangeRates] 系统无启用币种，跳过同步");
             return 0;
         }
 
         // 2. 提取币种代码列表
-        List<String> currencyCodes = exchangeRatesList.stream()
-                .map(ExchangeRatesDO::getCurrencyCode)
+        List<String> currencyCodes = enableCurrencies.stream()
+                .map(CurrencyRespDTO::getCurrencyCode)
                 .filter(code -> code != null && !code.isEmpty())
                 .distinct()
                 .collect(Collectors.toList());
-
-        if (CollUtil.isEmpty(currencyCodes)) {
-            log.warn("[syncOfficialExchangeRates] 无有效币种代码，跳过同步");
-            return 0;
-        }
 
         log.info("[syncOfficialExchangeRates] 开始同步官方汇率，币种数量: {}", currencyCodes.size());
 
         // 3. 调用外部 API 获取最新汇率
         Map<String, BigDecimal> latestRates = exchangeRateApiClient.getLatestRates(currencyCodes);
+        if (CollUtil.isEmpty(latestRates)) {
+            log.warn("[syncOfficialExchangeRates] 未获取到有效汇率");
+            return 0;
+        }
 
-        // 4. 遍历更新 officialRate 字段，不修改 customRate
+        // 4. 更新或插入汇率
         int updatedCount = 0;
-        for (ExchangeRatesDO exchangeRate : exchangeRatesList) {
-            String currencyCode = exchangeRate.getCurrencyCode();
-            if (currencyCode == null || currencyCode.isEmpty()) {
-                continue;
-            }
+        for (String code : latestRates.keySet()) {
+            ExchangeRatesDO existDO = getExchangeRatesByCurrencyCode(code);
+            BigDecimal newRate = latestRates.get(code);
 
-            BigDecimal newRate = latestRates.get(currencyCode.toUpperCase());
-            if (newRate == null) {
-                log.warn("[syncOfficialExchangeRates] 未获取到币种 {} 的汇率", currencyCode);
-                continue;
+            if (existDO != null) {
+                // 只更新 officialRate
+                ExchangeRatesDO updateObj = new ExchangeRatesDO();
+                updateObj.setId(existDO.getId());
+                updateObj.setOfficialRate(newRate);
+                exchangeRatesMapper.updateById(updateObj);
+            } else {
+                // 插入新记录
+                ExchangeRatesDO newDO = ExchangeRatesDO.builder()
+                        .currencyCode(code)
+                        .officialRate(newRate)
+                        .customRate(newRate) // 默认自定义汇率等于官方汇率
+                        .build();
+                exchangeRatesMapper.insert(newDO);
             }
-
-            // 只更新 officialRate，保留原有的 customRate
-            ExchangeRatesDO updateObj = new ExchangeRatesDO();
-            updateObj.setId(exchangeRate.getId());
-            updateObj.setOfficialRate(newRate);
-            exchangeRatesMapper.updateById(updateObj);
             updatedCount++;
         }
 
