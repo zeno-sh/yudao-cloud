@@ -111,7 +111,7 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .setSubject(buildOrderSubject(plan)) // 订单标题
                 .setBody(buildOrderBody(plan)) // 订单描述
                 .setPrice(payPrice) // 支付金额（分）
-                .setExpireTime(order.getExpireTime())); // 过期时间
+                .setExpireTime(order.getExpireTime())).getData(); // 过期时间
 
         // 2.3 更新支付单ID到订单
         subscriptionOrderMapper.updateById(SubscriptionOrderDO.builder()
@@ -242,7 +242,7 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
      */
     private PayOrderRespDTO validatePayOrderPaid(SubscriptionOrderDO order, Long payOrderId) {
         // 1. 校验支付单是否存在
-        PayOrderRespDTO payOrder = payOrderApi.getOrder(payOrderId);
+        PayOrderRespDTO payOrder = payOrderApi.getOrder(payOrderId).getData();
         if (payOrder == null) {
             log.error("[validatePayOrderPaid][订单({}) 支付单({}) 不存在]", order.getId(), payOrderId);
             throw exception(SUBSCRIPTION_ORDER_NOT_EXISTS);

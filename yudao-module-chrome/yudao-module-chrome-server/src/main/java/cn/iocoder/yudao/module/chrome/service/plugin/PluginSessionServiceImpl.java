@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.chrome.service.plugin;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.websocket.core.plugin.PluginSessionManager;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.server.ClientCookieDO;
 import cn.iocoder.yudao.module.chrome.dal.mysql.server.ClientCookieMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -26,7 +25,6 @@ import java.time.LocalDateTime;
 public class PluginSessionServiceImpl implements PluginSessionService {
 
     private final ClientCookieMapper clientCookieMapper;
-    private final PluginSessionManager pluginSessionManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

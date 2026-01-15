@@ -43,10 +43,19 @@ public interface OAuth2TokenCommonApi {
     @PutMapping(PREFIX + "/refresh")
     @Operation(summary = "刷新访问令牌")
     @Parameters({
-        @Parameter(name = "refreshToken", description = "刷新令牌", required = true, example = "haha"),
-        @Parameter(name = "clientId", description = "客户端编号", required = true, example = "yudaoyuanma")
+            @Parameter(name = "refreshToken", description = "刷新令牌", required = true, example = "haha"),
+            @Parameter(name = "clientId", description = "客户端编号", required = true, example = "yudaoyuanma")
     })
     CommonResult<OAuth2AccessTokenRespDTO> refreshAccessToken(@RequestParam("refreshToken") String refreshToken,
-                                                              @RequestParam("clientId") String clientId);
+            @RequestParam("clientId") String clientId);
+
+    @DeleteMapping(PREFIX + "/remove-by-user")
+    @Operation(summary = "根据用户编号移除访问令牌")
+    @Parameters({
+            @Parameter(name = "userId", description = "用户编号", required = true, example = "1024"),
+            @Parameter(name = "userType", description = "用户类型", required = true, example = "1")
+    })
+    CommonResult<Boolean> removeAccessTokenByUserId(@RequestParam("userId") Long userId,
+            @RequestParam("userType") Integer userType);
 
 }

@@ -11,12 +11,9 @@ import cn.iocoder.yudao.module.chrome.dal.mysql.order.SubscriptionOrderMapper;
 import cn.iocoder.yudao.module.chrome.service.payment.ChromePaymentService;
 import cn.iocoder.yudao.module.pay.api.notify.dto.PayOrderNotifyReqDTO;
 import cn.iocoder.yudao.module.pay.api.order.PayOrderApi;
-import cn.iocoder.yudao.module.pay.api.order.dto.PayOrderRespDTO;
-import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderSubmitReqVO;
-import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderSubmitRespVO;
+import cn.iocoder.yudao.module.pay.api.order.dto.PayOrderSubmitReqDTO;
+import cn.iocoder.yudao.module.pay.api.order.dto.PayOrderSubmitRespDTO;
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
-import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
-import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,7 +49,7 @@ public class ChromePaymentController {
     private SubscriptionOrderMapper subscriptionOrderMapper;
 
     @Resource
-    private PayOrderService payOrderService;
+    private PayOrderApi payOrderApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建支付订单")
@@ -92,12 +89,17 @@ public class ChromePaymentController {
     @Operation(summary = "提交支付订单")
     @PermitAll // 无需登录，插件端通过邮箱识别用户
     public CommonResult<ChromePaymentSubmitRespVO> submitPayOrder(@Valid @RequestBody ChromePaymentSubmitReqVO reqVO) {
-        // 提交支付，调用pay模块service
+        // 1. 设置默认支付渠道和展示模式
         reqVO.setChannelCode(PayChannelEnum.ALIPAY_QR.getCode());
-        reqVO.setDisplayMode(PayOrderDisplayModeEnum.BAR_CODE.getMode());
+        reqVO.setDisplayMode("bar_code");
 
-        PayOrderSubmitRespVO respVO = payOrderService.submitOrder(BeanUtils.toBean(reqVO, PayOrderSubmitReqVO.class), getClientIP());
-        return success(BeanUtils.toBean(respVO, ChromePaymentSubmitRespVO.class));
+        // 2. 构建 RPC 请求 DTO
+        PayOrderSubmitReqDTO reqDTO = BeanUtils.toBean(reqVO, PayOrderSubmitReqDTO.class);
+        reqDTO.setUserIp(getClientIP());
+
+        // 3. 调用 pay 模块提交支付
+        PayOrderSubmitRespDTO respDTO = payOrderApi.submitOrder(reqDTO).getCheckedData();
+        return success(BeanUtils.toBean(respDTO, ChromePaymentSubmitRespVO.class));
     }
 
     @PutMapping("/cancel")

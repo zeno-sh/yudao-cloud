@@ -49,4 +49,10 @@ public class OAuth2TokenApiImpl implements OAuth2TokenCommonApi {
         return success(BeanUtils.toBean(accessTokenDO, OAuth2AccessTokenRespDTO.class));
     }
 
+    @Override
+    public CommonResult<Boolean> removeAccessTokenByUserId(Long userId, Integer userType) {
+        oauth2TokenService.removeAccessTokenByUserId(userId, userType);
+        return success(true);
+    }
+
 }

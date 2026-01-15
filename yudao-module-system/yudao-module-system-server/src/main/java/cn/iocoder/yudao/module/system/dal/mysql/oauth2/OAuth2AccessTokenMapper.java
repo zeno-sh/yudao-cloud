@@ -19,6 +19,13 @@ public interface OAuth2AccessTokenMapper extends BaseMapperX<OAuth2AccessTokenDO
         return selectOne(OAuth2AccessTokenDO::getAccessToken, accessToken);
     }
 
+    @TenantIgnore
+    default void deleteByUserId(Long userId, Integer userType) {
+        delete(new LambdaQueryWrapperX<OAuth2AccessTokenDO>()
+                .eq(OAuth2AccessTokenDO::getUserId, userId)
+                .eq(OAuth2AccessTokenDO::getUserType, userType));
+    }
+
     default List<OAuth2AccessTokenDO> selectListByRefreshToken(String refreshToken) {
         return selectList(OAuth2AccessTokenDO::getRefreshToken, refreshToken);
     }

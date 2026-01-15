@@ -33,6 +33,10 @@ public class SubscriptionPlanDO extends BaseDO {
      */
     private String planName;
     /**
+     * 平台类型（Amazon, Coupang等）
+     */
+    private String platform;
+    /**
      * 订阅类型（10免费版 20基础版 30高级版）
      */
     private Integer subscriptionType;

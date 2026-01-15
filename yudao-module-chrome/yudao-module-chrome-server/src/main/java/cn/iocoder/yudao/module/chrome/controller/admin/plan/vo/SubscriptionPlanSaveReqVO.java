@@ -17,6 +17,10 @@ public class SubscriptionPlanSaveReqVO {
     @NotEmpty(message = "套餐名称不能为空")
     private String planName;
 
+    @Schema(description = "平台类型（Amazon, Coupang等）", requiredMode = Schema.RequiredMode.REQUIRED, example = "Amazon")
+    @NotEmpty(message = "平台类型不能为空")
+    private String platform;
+
     @Schema(description = "订阅类型（10免费版 20基础版 30高级版）", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @NotNull(message = "订阅类型（10免费版 20基础版 30高级版）不能为空")
     private Integer subscriptionType;

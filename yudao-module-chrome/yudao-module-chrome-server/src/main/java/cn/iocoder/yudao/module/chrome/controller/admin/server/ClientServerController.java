@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 
-import javax.validation.constraints.*;
 import javax.validation.*;
 import javax.servlet.http.*;
 import java.util.*;
@@ -30,7 +29,6 @@ import cn.iocoder.yudao.module.chrome.dal.dataobject.server.ClientServerDO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.server.ClientCookieDO;
 import cn.iocoder.yudao.module.chrome.service.server.ClientServerService;
 import cn.iocoder.yudao.module.chrome.service.plugin.PluginSessionService;
-import cn.iocoder.yudao.framework.websocket.core.plugin.service.PluginCommandService;
 
 @Tag(name = "管理后台 - Chrome 插件cookie服务器")
 @RestController
@@ -43,9 +41,6 @@ public class ClientServerController {
 
     @Resource
     private PluginSessionService pluginSessionService;
-
-    @Resource
-    private PluginCommandService pluginCommandService;
 
     @PostMapping("/create")
     @Operation(summary = "创建Chrome 插件cookie服务器")
@@ -122,24 +117,5 @@ public class ClientServerController {
         return success(pluginSessionService.getPluginSessionPage(serverId, account, online, pageNo, pageSize));
     }
 
-    // ==================== WebSocket 插件会话管理 ====================
-
-    @PostMapping("/client-cookie/send-command")
-    @Operation(summary = "向指定账号发送命令")
-    @PreAuthorize("@ss.hasPermission('chrome:client-server:update')")
-    public CommonResult<Boolean> sendCommandToPlugin(@RequestParam("account") @NotEmpty(message = "账号不能为空") String account,
-                                                      @RequestParam("commandType") @NotEmpty(message = "命令类型不能为空") String commandType,
-                                                      @RequestParam(value = "commandData", required = false) String commandData) {
-        return success(pluginCommandService.sendCommand(account, commandType, commandData));
-    }
-
-    @PostMapping("/client-cookie/broadcast-command")
-    @Operation(summary = "广播命令到所有插件")
-    @PreAuthorize("@ss.hasPermission('chrome:client-server:update')")
-    public CommonResult<Boolean> broadcastCommandToPlugins(@RequestParam("commandType") @NotEmpty(message = "命令类型不能为空") String commandType,
-                                                            @RequestParam(value = "commandData", required = false) String commandData) {
-        pluginCommandService.broadcastCommand(commandType, commandData);
-        return success(true);
-    }
 
 }

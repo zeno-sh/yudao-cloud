@@ -28,7 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @RequestMapping("/chrome/product-sales")
 @Validated
 @Slf4j
-@RequireSubscription(checkExpiration = true, checkCredits = true, minCredits = 2, feature = "销量采集功能")
+@RequireSubscription(feature = "销量采集功能")
 public class ProductSalesController {
 
     @Resource

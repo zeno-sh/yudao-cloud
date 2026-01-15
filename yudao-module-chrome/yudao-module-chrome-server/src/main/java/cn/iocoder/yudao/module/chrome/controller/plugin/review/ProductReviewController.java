@@ -29,7 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @RequestMapping("/chrome/product-review")
 @Validated
 @Slf4j
-@RequireSubscription(checkExpiration = true, checkCredits = true, minCredits = 1, feature = "产品评论验证")
+@RequireSubscription(feature = "产品评论验证")
 public class ProductReviewController {
 
     @Resource

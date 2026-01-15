@@ -29,7 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @RequestMapping("/chrome/trends")
 @Validated
 @Slf4j
-@RequireSubscription(checkExpiration = true, checkCredits = true, minCredits = 5, feature = "类目查询验证")
+@RequireSubscription(feature = "类目查询验证")
 public class TrendsController {
 
     @Resource

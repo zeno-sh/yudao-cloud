@@ -163,7 +163,7 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
     @Override
     public void logout(String token) {
         // 删除访问令牌
-        OAuth2AccessTokenRespDTO accessTokenRespDTO = oauth2TokenApi.removeAccessToken(token);
+        OAuth2AccessTokenRespDTO accessTokenRespDTO = oauth2TokenApi.removeAccessToken(token).getData();
         if (accessTokenRespDTO == null) {
             return;
         }
@@ -173,7 +173,7 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
 
     @Override
     public ChromeAuthLoginRespVO refreshToken(String refreshToken) {
-        OAuth2AccessTokenRespDTO accessTokenDO = oauth2TokenApi.refreshAccessToken(refreshToken, "chrome-web");
+        OAuth2AccessTokenRespDTO accessTokenDO = oauth2TokenApi.refreshAccessToken(refreshToken, "chrome-web").getData();
         return ChromeAuthLoginRespVO.builder()
                 .accessToken(accessTokenDO.getAccessToken())
                 .refreshToken(accessTokenDO.getRefreshToken())
@@ -247,7 +247,7 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         createReqDTO.setUserType(UserTypeEnum.PLUGIN.getValue());
         createReqDTO.setClientId("chrome-web");
         createReqDTO.setScopes(null); // 不使用 scope 机制
-        OAuth2AccessTokenRespDTO accessTokenRespDTO = oauth2TokenApi.createAccessToken(createReqDTO);
+        OAuth2AccessTokenRespDTO accessTokenRespDTO = oauth2TokenApi.createAccessToken(createReqDTO).getData();
 
         // 5. 记录登录日志
         ChromeAuthLoginRespVO respVO = ChromeAuthLoginRespVO.builder()

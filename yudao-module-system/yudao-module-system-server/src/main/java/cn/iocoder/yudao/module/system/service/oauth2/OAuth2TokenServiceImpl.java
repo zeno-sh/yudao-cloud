@@ -10,6 +10,7 @@ import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstant
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.DateUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
@@ -156,6 +158,22 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
     @Override
     public PageResult<OAuth2AccessTokenDO> getAccessTokenPage(OAuth2AccessTokenPageReqVO reqVO) {
         return oauth2AccessTokenMapper.selectPage(reqVO);
+    }
+
+    @Override
+    public void removeAccessTokenByUserId(Long userId, Integer userType) {
+        // 删除访问令牌
+        LambdaQueryWrapperX<OAuth2AccessTokenDO> queryWrapperX = new LambdaQueryWrapperX<>();
+        queryWrapperX.eq(OAuth2AccessTokenDO::getUserId, userId)
+                .eq(OAuth2AccessTokenDO::getUserType, userType);
+
+        List<OAuth2AccessTokenDO> tokenDOList = oauth2AccessTokenMapper.selectList(queryWrapperX);
+        List<String> accessTokens = tokenDOList.stream().map(OAuth2AccessTokenDO::getAccessToken).collect(Collectors.toList());
+
+        oauth2AccessTokenMapper.deleteByUserId(userId, userType);
+        oauth2AccessTokenRedisDAO.deleteList(accessTokens);
+        // 删除刷新令牌
+        oauth2RefreshTokenMapper.deleteByUserId(userId, userType);
     }
 
     private OAuth2AccessTokenDO createOAuth2AccessToken(OAuth2RefreshTokenDO refreshTokenDO, OAuth2ClientDO clientDO) {
