@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.chrome.job;
 
-import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
 import cn.iocoder.yudao.module.chrome.enums.SubscriptionTypeEnum;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -22,16 +22,22 @@ import java.util.List;
  *
  * @author Jax
  */
-@Component
+@Service
 @Slf4j
-public class ChromeSubscriptionExpireJob implements JobHandler {
+public class ChromeSubscriptionExpireJob {
 
     @Resource
     private SubscriptionService subscriptionService;
 
-    @Override
+    /**
+     * 订阅到期检查任务
+     *
+     * @param param 可选参数（预留，当前未使用）
+     * @return 执行结果描述
+     */
+    @XxlJob("chromeSubscriptionExpireJob")
     @TenantJob
-    public String execute(String param) throws Exception {
+    public String execute(String param) {
         log.info("[ChromeSubscriptionExpireJob][开始执行订阅到期检查任务]");
 
         try {
@@ -49,7 +55,7 @@ public class ChromeSubscriptionExpireJob implements JobHandler {
 
         } catch (Exception e) {
             log.error("[ChromeSubscriptionExpireJob][订阅到期检查任务执行失败]", e);
-            throw e;
+            throw new RuntimeException("订阅到期检查任务执行失败", e);
         }
     }
 
