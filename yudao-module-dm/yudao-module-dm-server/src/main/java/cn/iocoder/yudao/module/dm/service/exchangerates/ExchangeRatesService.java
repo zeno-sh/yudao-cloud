@@ -59,4 +59,27 @@ public interface ExchangeRatesService {
      * @return
      */
     ExchangeRatesDO getExchangeRatesByCurrencyCode(String currencyCode);
+
+    /**
+     * 批量初始化租户汇率
+     *
+     * @param tenantId      租户编号
+     * @param currencyCodes 币种代码列表
+     */
+    void batchInitExchangeRates(Long tenantId, List<String> currencyCodes);
+
+    /**
+     * 同步官方汇率
+     * 从外部 API 获取最新汇率，只更新 officialRate，不修改 customRate
+     *
+     * @return 同步的汇率记录数
+     */
+    int syncOfficialExchangeRates();
+
+    /**
+     * 获取所有汇率记录
+     *
+     * @return 汇率列表
+     */
+    List<ExchangeRatesDO> getAllExchangeRates();
 }

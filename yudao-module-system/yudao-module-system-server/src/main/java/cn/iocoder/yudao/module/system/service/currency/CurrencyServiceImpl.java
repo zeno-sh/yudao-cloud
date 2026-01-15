@@ -35,4 +35,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         return currencyMapper.selectList();
     }
 
+    @Override
+    public List<CurrencyDO> getEnabledCurrencyList() {
+        return currencyMapper.selectListByStatus(1); // 1-启用
+    }
+
 }

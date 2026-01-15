@@ -41,4 +41,10 @@ public class CurrencyApiImpl implements CurrencyApi {
         return CommonResult.success(BeanUtils.toBean(list, CurrencyRespDTO.class));
     }
 
+    @Override
+    public CommonResult<List<CurrencyRespDTO>> getEnabledCurrencyList() {
+        List<CurrencyDO> list = currencyService.getEnabledCurrencyList();
+        return CommonResult.success(BeanUtils.toBean(list, CurrencyRespDTO.class));
+    }
+
 }

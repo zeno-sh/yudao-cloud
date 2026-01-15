@@ -36,6 +36,7 @@
             <version>${revision}</version>
         </dependency>
 
+
         <!-- 业务组件 -->
         <dependency>
             <groupId>cn.iocoder.cloud</groupId>

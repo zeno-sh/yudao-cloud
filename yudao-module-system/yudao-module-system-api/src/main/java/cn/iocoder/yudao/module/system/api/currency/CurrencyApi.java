@@ -54,4 +54,13 @@ public interface CurrencyApi {
     @Operation(summary = "获得币种信息列表")
     CommonResult<List<CurrencyRespDTO>> getCurrencyList();
 
+    /**
+     * 获得启用状态的币种列表
+     *
+     * @return 启用状态的币种信息列表
+     */
+    @GetMapping(PREFIX + "/list-enabled")
+    @Operation(summary = "获得启用状态的币种列表")
+    CommonResult<List<CurrencyRespDTO>> getEnabledCurrencyList();
+
 }

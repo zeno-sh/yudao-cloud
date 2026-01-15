@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.dal.mysql.currency;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.dal.dataobject.currency.CurrencyDO;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -31,6 +32,18 @@ public interface CurrencyMapper extends BaseMapperX<CurrencyDO> {
      */
     default List<CurrencyDO> selectList() {
         return selectList("deleted", false);
+    }
+
+    /**
+     * 根据状态查询币种列表
+     *
+     * @param status 状态（0-禁用，1-启用）
+     * @return 币种信息列表
+     */
+    default List<CurrencyDO> selectListByStatus(Integer status) {
+        return selectList(new LambdaQueryWrapperX<CurrencyDO>()
+                .eq(CurrencyDO::getStatus, status)
+                .eq(CurrencyDO::getDeleted, false));
     }
 
 }

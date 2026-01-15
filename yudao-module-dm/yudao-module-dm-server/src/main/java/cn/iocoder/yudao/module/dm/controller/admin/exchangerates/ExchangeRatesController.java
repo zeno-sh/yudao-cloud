@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 
-import javax.validation.constraints.*;
 import javax.validation.*;
 import javax.servlet.http.*;
 import java.util.*;
@@ -75,7 +74,8 @@ public class ExchangeRatesController {
     @Operation(summary = "根据币种代码获得汇率")
     @Parameter(name = "currencyCode", description = "币种代码", required = true, example = "USD")
     @PreAuthorize("@ss.hasPermission('dm:exchange-rates:query')")
-    public CommonResult<ExchangeRatesRespVO> getExchangeRatesByCurrencyCode(@RequestParam("currencyCode") String currencyCode) {
+    public CommonResult<ExchangeRatesRespVO> getExchangeRatesByCurrencyCode(
+            @RequestParam("currencyCode") String currencyCode) {
         ExchangeRatesDO exchangeRates = exchangeRatesService.getExchangeRatesByCurrencyCode(currencyCode);
         return success(BeanUtils.toBean(exchangeRates, ExchangeRatesRespVO.class));
     }
@@ -93,12 +93,20 @@ public class ExchangeRatesController {
     @PreAuthorize("@ss.hasPermission('dm:exchange-rates:export')")
     @ApiAccessLog(operateType = EXPORT)
     public void exportExchangeRatesExcel(@Valid ExchangeRatesPageReqVO pageReqVO,
-              HttpServletResponse response) throws IOException {
+            HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ExchangeRatesDO> list = exchangeRatesService.getExchangeRatesPage(pageReqVO).getList();
         // 导出 Excel
         ExcelUtils.write(response, "汇率.xls", "数据", ExchangeRatesRespVO.class,
-                        BeanUtils.toBean(list, ExchangeRatesRespVO.class));
+                BeanUtils.toBean(list, ExchangeRatesRespVO.class));
+    }
+
+    @PostMapping("/sync-official-rates")
+    @Operation(summary = "同步官方汇率", description = "从外部 API 获取最新汇率，只更新官方汇率，不修改自定义汇率")
+    @PreAuthorize("@ss.hasPermission('dm:exchange-rates:update')")
+    public CommonResult<Integer> syncOfficialRates() {
+        int count = exchangeRatesService.syncOfficialExchangeRates();
+        return success(count);
     }
 
 }

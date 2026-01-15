@@ -26,12 +26,14 @@ import cn.iocoder.yudao.module.system.enums.permission.RoleTypeEnum;
 import cn.iocoder.yudao.module.system.service.permission.MenuService;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
+import cn.iocoder.yudao.module.system.service.tenant.event.TenantCreateEvent;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -73,6 +75,8 @@ public class TenantServiceImpl implements TenantService {
     private MenuService menuService;
     @Resource
     private PermissionService permissionService;
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     @Override
     public List<Long> getTenantIdList() {
@@ -117,6 +121,11 @@ public class TenantServiceImpl implements TenantService {
             // 修改租户的管理员
             tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
         });
+
+        // 发布租户创建事件，用于初始化汇率等数据
+        eventPublisher.publishEvent(new TenantCreateEvent(this, tenant.getId()));
+        log.info("[createTenant][租户({}) 创建成功，已发布 TenantCreateEvent]", tenant.getId());
+
         return tenant.getId();
     }
 
@@ -202,7 +211,8 @@ public class TenantServiceImpl implements TenantService {
                 // 如果是租户管理员，重新分配其权限为租户套餐的权限
                 if (Objects.equals(role.getCode(), RoleCodeEnum.TENANT_ADMIN.getCode())) {
                     permissionService.assignRoleMenu(role.getId(), menuIds);
-                    log.info("[updateTenantRoleMenu][租户管理员({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(), menuIds);
+                    log.info("[updateTenantRoleMenu][租户管理员({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(),
+                            menuIds);
                     return;
                 }
                 // 如果是其他角色，则去掉超过套餐的权限

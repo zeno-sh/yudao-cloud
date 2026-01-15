@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.dm.dal.dataobject.exchangerates;
 
+import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import lombok.*;
 import java.util.*;
 import java.math.BigDecimal;
@@ -22,7 +23,7 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExchangeRatesDO extends BaseDO {
+public class ExchangeRatesDO extends TenantBaseDO {
 
     /**
      * 主键ID

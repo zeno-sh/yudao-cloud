@@ -7,6 +7,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(value = "systemRpcConfiguration", proxyBeanMethods = false)
-@EnableFeignClients(clients = {FileApi.class, WebSocketSenderApi.class, ConfigApi.class})
+@EnableFeignClients(clients = { FileApi.class, WebSocketSenderApi.class, ConfigApi.class })
 public class RpcConfiguration {
 }

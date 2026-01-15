@@ -4,7 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.platform.common.api.PlatformOrderApi;
 import cn.iocoder.yudao.module.platform.common.dto.PlatformOrderDTO;
 import cn.iocoder.yudao.module.platform.common.dto.PlatformOrderQueryDTO;
-import cn.iocoder.yudao.module.sellfox.api.platform.AmazonOrderApi;
+import cn.iocoder.yudao.module.sellfox.api.statistics.AmazonOrderApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

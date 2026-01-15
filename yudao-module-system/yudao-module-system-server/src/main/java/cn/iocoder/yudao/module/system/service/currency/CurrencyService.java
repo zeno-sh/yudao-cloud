@@ -34,4 +34,11 @@ public interface CurrencyService {
      */
     List<CurrencyDO> getCurrencyList();
 
+    /**
+     * 获得启用状态的币种列表
+     *
+     * @return 启用状态的币种信息列表
+     */
+    List<CurrencyDO> getEnabledCurrencyList();
+
 }

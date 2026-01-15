@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.module.dm.service.calculation;
 
 import cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil;
-import cn.iocoder.yudao.module.dm.api.DmExchangeRateQueryService;
+import cn.iocoder.yudao.module.dm.api.DmExchangeRateService;
 import cn.iocoder.yudao.module.dm.controller.admin.calculation.vo.ProfitCalculationSaveReqVO;
 import cn.iocoder.yudao.module.dm.dal.dataobject.template.ProfitCalculationTemplateDO;
 import cn.iocoder.yudao.module.dm.enums.ErrorCodeConstants;
@@ -45,7 +45,7 @@ public class ProfitCalculationAlgorithmServiceImpl implements ProfitCalculationA
     private ProfitCalculationTemplateService templateService;
 
     @Resource
-    private DmExchangeRateQueryService exchangeRateQueryService;
+    private DmExchangeRateService exchangeRateQueryService;
 
     @Resource
     private ExchangeRateApi exchangeRateApi;
