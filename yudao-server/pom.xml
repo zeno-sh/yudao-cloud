@@ -115,6 +115,14 @@
 <!--            <version>${revision}</version>-->
 <!--        </dependency>-->
 
+
+        <!-- 谷歌插件。默认注释，保证编译速度-->
+        <dependency>
+            <groupId>cn.iocoder.cloud</groupId>
+            <artifactId>yudao-module-chrome-server</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- spring boot 配置所需依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
