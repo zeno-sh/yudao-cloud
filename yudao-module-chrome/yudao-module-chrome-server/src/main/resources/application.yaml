@@ -121,6 +121,6 @@ yudao:
     description: 提供 Chrome 插件相关功能
     version: ${yudao.info.version}
   tenant: # 多租户相关配置项
-    enable: true
+    enable: false
 
 debug: false
