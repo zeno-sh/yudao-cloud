@@ -49,6 +49,7 @@ public interface ErrorCodeConstants {
     ErrorCode SUBSCRIPTION_PLAN_NOT_EXISTS = new ErrorCode(1_030_006_000, "订阅计划不存在");
     ErrorCode SUBSCRIPTION_PLAN_TYPE_ERROR = new ErrorCode(1_030_006_001, "订阅计划类型错误");
     ErrorCode SUBSCRIPTION_PLAN_DISABLED = new ErrorCode(1_030_006_002, "订阅计划已禁用");
+    ErrorCode SUBSCRIPTION_PLAN_DURATION_REQUIRED = new ErrorCode(1_030_006_007, "非一次性购买时，订阅时长不能为空");
     ErrorCode USER_CREDITS_NOT_EXISTS = new ErrorCode(1_030_006_003, "用户积分记录不存在");
     ErrorCode SUBSCRIPTION_ORDER_NOT_EXISTS = new ErrorCode(1_030_006_004, "订阅订单不存在");
     ErrorCode CREDITS_TRANSACTION_NOT_EXISTS = new ErrorCode(1_030_006_005, "积分交易记录不存在");

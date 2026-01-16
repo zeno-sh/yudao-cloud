@@ -15,6 +15,12 @@ public class SubscriptionPlanListRespVO {
     @Schema(description = "套餐名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "基础版")
     private String planName;
 
+    @Schema(description = "平台类型（Amazon, Coupang等）", example = "Coupang")
+    private String platform;
+
+    @Schema(description = "订阅时长（天数，0表示不提供时长/永久）", example = "30")
+    private Integer durationDays;
+
     @Schema(description = "订阅类型（10免费版 20基础版 30高级版）", requiredMode = Schema.RequiredMode.REQUIRED, example = "20")
     private Integer subscriptionType;
 
