@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.client.OAuth2ClientPageReqVO;
@@ -45,6 +46,7 @@ public class OAuth2ClientServiceImpl implements OAuth2ClientService {
         validateClientIdExists(null, createReqVO.getClientId());
         // 插入
         OAuth2ClientDO client = BeanUtils.toBean(createReqVO, OAuth2ClientDO.class);
+        client.setLogo(HttpUtils.removeUrlQuery(client.getLogo()));
         oauth2ClientMapper.insert(client);
         return client.getId();
     }

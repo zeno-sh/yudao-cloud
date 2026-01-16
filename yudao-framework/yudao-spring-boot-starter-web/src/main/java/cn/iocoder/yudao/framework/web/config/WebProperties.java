@@ -20,6 +20,8 @@ public class WebProperties {
     private Api appApi = new Api("/app-api", "**.controller.app.**");
     @NotNull(message = "Admin API 不能为空")
     private Api adminApi = new Api("/admin-api", "**.controller.admin.**");
+    @NotNull(message = "Plugin API 不能为空")
+    private Api pluginApi = new Api("/plugin-api", "**.controller.plugin.**");
 
     @NotNull(message = "Admin UI 不能为空")
     private Ui adminUi;
@@ -35,7 +37,7 @@ public class WebProperties {
          *
          *
          * 意义：通过该前缀，避免 Swagger、Actuator 意外通过 Nginx 暴露出来给外部，带来安全性问题
-         *      这样，Nginx 只需要配置转发到 /api/* 的所有接口即可。
+         * 这样，Nginx 只需要配置转发到 /api/* 的所有接口即可。
          *
          * @see YudaoWebAutoConfiguration#configurePathMatch(PathMatchConfigurer)
          */

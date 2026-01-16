@@ -112,5 +112,24 @@ yudao:
     version: ${yudao.info.version}
   tenant: # 多租户相关配置项
     enable: true
+    ignore-urls:
+      - /jmreport/* # 积木报表，无法携带租户编号
+    ignore-tables:
+      - jimu_dict
+      - jimu_dict_item
+      - jimu_report
+      - jimu_report_data_source
+      - jimu_report_db
+      - jimu_report_db_field
+      - jimu_report_db_param
+      - jimu_report_link
+      - jimu_report_map
+      - jimu_report_share
+      - rep_demo_dxtj
+      - rep_demo_employee
+      - rep_demo_gongsi
+      - rep_demo_jianpiao
+      - tmp_report_data_1
+      - tmp_report_data_income
 
 debug: false

@@ -37,10 +37,10 @@ public class PluginSubscriptionPlanController {
 
     @Resource
     private SubscriptionPlanService subscriptionPlanService;
-    
+
     @Resource
     private ChromeConfigService chromeConfigService;
-    
+
     @Resource
     private CreditsPackService creditsPackService;
 
@@ -50,7 +50,7 @@ public class PluginSubscriptionPlanController {
     @PermitAll
     public CommonResult<List<SubscriptionPlanListRespVO>> getSubscriptionPlanList() {
         List<SubscriptionPlanDO> plans;
-        
+
         // 根据配置模式返回不同的套餐
         if (chromeConfigService.isSimpleModeEnabled()) {
             // 简化模式：只返回积分包套餐
@@ -61,12 +61,12 @@ public class PluginSubscriptionPlanController {
             log.info("[getSubscriptionPlanList][完整模式，返回所有套餐]");
             plans = subscriptionPlanService.getEnabledSubscriptionPlans();
         }
-        
+
         // 转换为VO并按排序字段排序
         List<SubscriptionPlanListRespVO> respList = BeanUtils.toBean(plans, SubscriptionPlanListRespVO.class);
-        respList.sort(Comparator.comparing(SubscriptionPlanListRespVO::getSortOrder, 
+        respList.sort(Comparator.comparing(SubscriptionPlanListRespVO::getSortOrder,
                 Comparator.nullsLast(Comparator.naturalOrder())));
-        
+
         log.info("[getSubscriptionPlanList][返回套餐数量: {}]", respList.size());
         return success(respList);
     }

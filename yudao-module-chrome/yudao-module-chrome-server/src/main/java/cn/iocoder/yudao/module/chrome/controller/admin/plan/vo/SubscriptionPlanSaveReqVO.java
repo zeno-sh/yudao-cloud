@@ -33,6 +33,10 @@ public class SubscriptionPlanSaveReqVO {
     @NotNull(message = "积分数量不能为空")
     private Integer credits;
 
+    @Schema(description = "订阅时长（天数，0表示不提供时长）", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "订阅时长不能为空")
+    private Integer durationDays;
+
     @Schema(description = "价格（美元）", requiredMode = Schema.RequiredMode.REQUIRED, example = "9761")
     @NotNull(message = "价格（美元）不能为空")
     private BigDecimal price;

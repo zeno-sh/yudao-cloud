@@ -37,6 +37,10 @@ public class SubscriptionPlanRespVO {
     @ExcelProperty("积分数量")
     private Integer credits;
 
+    @Schema(description = "订阅时长（天数）", requiredMode = Schema.RequiredMode.REQUIRED)
+    @ExcelProperty("订阅时长(天)")
+    private Integer durationDays;
+
     @Schema(description = "价格（美元）", requiredMode = Schema.RequiredMode.REQUIRED, example = "9761")
     @ExcelProperty("价格（美元）")
     private BigDecimal price;

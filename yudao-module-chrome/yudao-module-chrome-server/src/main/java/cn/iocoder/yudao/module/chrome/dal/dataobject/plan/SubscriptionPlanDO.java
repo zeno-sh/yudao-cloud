@@ -49,6 +49,10 @@ public class SubscriptionPlanDO extends BaseDO {
      */
     private Integer credits;
     /**
+     * 订阅时长（天数，0表示不提供时长/永久）
+     */
+    private Integer durationDays;
+    /**
      * 价格
      */
     private BigDecimal price;

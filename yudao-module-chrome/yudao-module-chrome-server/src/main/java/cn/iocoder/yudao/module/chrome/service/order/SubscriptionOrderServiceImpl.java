@@ -36,13 +36,13 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
 
     @Resource
     private SubscriptionOrderMapper subscriptionOrderMapper;
-    
+
     @Resource
     private UserCreditsService userCreditsService;
-    
+
     @Resource
     private SubscriptionService subscriptionService;
-    
+
     @Resource
     private SubscriptionPlanService subscriptionPlanService;
 
@@ -52,16 +52,16 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         // 插入订单
         SubscriptionOrderDO subscriptionOrder = BeanUtils.toBean(createReqVO, SubscriptionOrderDO.class);
         subscriptionOrderMapper.insert(subscriptionOrder);
-        
+
         // 如果支付状态为已支付，处理后续业务逻辑
         if (createReqVO.getPaymentStatus() != null && createReqVO.getPaymentStatus() == 20) {
             processOrderPayment(subscriptionOrder);
         }
-        
+
         // 返回
         return subscriptionOrder.getId();
     }
-    
+
     /**
      * 处理订单支付后的业务逻辑
      * 
@@ -78,31 +78,34 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
                 Integer paymentDuration = calculatePaymentDuration(order.getBillingCycle(), plan);
 
                 // 智能升级或续费订阅（会自动处理升级规则和积分充值）
-                subscriptionService.upgradeSubscription(order.getUserId(), order.getSubscriptionType(), paymentDuration, order.getPlanId());
+                subscriptionService.upgradeSubscription(order.getUserId(), order.getSubscriptionType(), paymentDuration,
+                        order.getPlanId());
             }
         }
     }
-    
+
     /**
-     * 根据计费周期计算付费时长
+     * 根据套餐配置获取付费时长
      * 
-     * @param billingCycle 计费周期 (10=月付, 20=年付, 30=不限时间, 40=一次性购买)
-     * @param plan 套餐信息
+     * @param billingCycle 计费周期 (10=月付, 20=年付, 30=一次性购买)
+     * @param plan         套餐信息
      * @return 付费时长（天数）
      */
     private Integer calculatePaymentDuration(Integer billingCycle, SubscriptionPlanDO plan) {
-        if (BillingCycleEnum.MONTHLY.getCode().equals(billingCycle)) {
-            // 月付：30天
-            return BillingCycleEnum.MONTHLY.getDays();
-        } else if (BillingCycleEnum.YEARLY.getCode().equals(billingCycle)) {
-            // 年付：365天
-            return BillingCycleEnum.YEARLY.getDays();
-        } else if (BillingCycleEnum.ONE_TIME.getCode().equals(billingCycle)) {
-            // 一次性购买（积分包）：0天，表示不基于时间，永久有效
+        // 优先使用套餐配置的订阅时长
+        if (plan != null && plan.getDurationDays() != null && plan.getDurationDays() > 0) {
+            return plan.getDurationDays();
+        }
+
+        // 一次性购买（积分包）：0天，表示不基于时间，永久有效
+        if (BillingCycleEnum.ONE_TIME.getCode().equals(billingCycle)) {
             return 0;
         }
-        // 默认30天（月付）
-        return BillingCycleEnum.MONTHLY.getDays();
+
+        // 兜底默认值，避免套餐配置缺失时出错
+        log.warn("[calculatePaymentDuration][套餐({})未配置订阅时长，使用默认值30天]",
+                plan != null ? plan.getId() : null);
+        return 30;
     }
 
     @Override
@@ -110,16 +113,17 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
     public void updateSubscriptionOrder(SubscriptionOrderSaveReqVO updateReqVO) {
         // 校验存在
         validateSubscriptionOrderExists(updateReqVO.getId());
-        
+
         // 获取原订单信息
         SubscriptionOrderDO originalOrder = subscriptionOrderMapper.selectById(updateReqVO.getId());
-        
+
         // 更新订单
         SubscriptionOrderDO updateObj = BeanUtils.toBean(updateReqVO, SubscriptionOrderDO.class);
         subscriptionOrderMapper.updateById(updateObj);
-        
+
         // 检查支付状态是否从非已支付变为已支付
-        if (originalOrder.getPaymentStatus() != 20 && updateReqVO.getPaymentStatus() != null && updateReqVO.getPaymentStatus() == 20) {
+        if (originalOrder.getPaymentStatus() != 20 && updateReqVO.getPaymentStatus() != null
+                && updateReqVO.getPaymentStatus() == 20) {
             // 设置支付时间
             if (updateReqVO.getPaymentTime() == null) {
                 updateObj.setPaymentTime(LocalDateTime.now());

@@ -62,13 +62,15 @@ public class YudaoWebAutoConfiguration {
                 Map<String, Predicate<Class<?>>> pathPrefixes = Maps.newLinkedHashMapWithExpectedSize(2);
                 putPathPrefix(pathPrefixes, webProperties.getAdminApi(), antPathMatcher);
                 putPathPrefix(pathPrefixes, webProperties.getAppApi(), antPathMatcher);
+                putPathPrefix(pathPrefixes, webProperties.getPluginApi(), antPathMatcher);
                 return pathPrefixes;
             }
 
             /**
              * 设置 API 前缀，仅仅匹配 controller 包下的
              */
-            private void putPathPrefix(Map<String, Predicate<Class<?>>> pathPrefixes, WebProperties.Api api, AntPathMatcher matcher) {
+            private void putPathPrefix(Map<String, Predicate<Class<?>>> pathPrefixes, WebProperties.Api api,
+                    AntPathMatcher matcher) {
                 if (api == null || StrUtil.isEmpty(api.getPrefix())) {
                     return;
                 }

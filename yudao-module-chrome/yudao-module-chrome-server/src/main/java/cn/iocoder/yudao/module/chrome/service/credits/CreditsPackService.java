@@ -35,12 +35,11 @@ public class CreditsPackService {
      */
     public List<SubscriptionPlanDO> getAvailableCreditsPackPlans() {
         return subscriptionPlanMapper.selectList(
-            new LambdaQueryWrapper<SubscriptionPlanDO>()
-                .eq(SubscriptionPlanDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
-                .eq(SubscriptionPlanDO::getBillingCycle, BillingCycleEnum.ONE_TIME.getCode())
-                .eq(SubscriptionPlanDO::getStatus, true)
-                .orderByAsc(SubscriptionPlanDO::getSortOrder)
-        );
+                new LambdaQueryWrapper<SubscriptionPlanDO>()
+                        .eq(SubscriptionPlanDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
+                        .eq(SubscriptionPlanDO::getBillingCycle, BillingCycleEnum.ONE_TIME.getCode())
+                        .eq(SubscriptionPlanDO::getStatus, true)
+                        .orderByAsc(SubscriptionPlanDO::getSortOrder));
     }
 
     /**
@@ -50,11 +49,11 @@ public class CreditsPackService {
         if (planId == null) {
             return false;
         }
-        
+
         SubscriptionPlanDO plan = subscriptionPlanMapper.selectById(planId);
-        return plan != null && 
-               SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(plan.getSubscriptionType()) &&
-               BillingCycleEnum.ONE_TIME.getCode().equals(plan.getBillingCycle());
+        return plan != null &&
+                SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(plan.getSubscriptionType()) &&
+                BillingCycleEnum.ONE_TIME.getCode().equals(plan.getBillingCycle());
     }
 
     /**
@@ -67,8 +66,8 @@ public class CreditsPackService {
         }
 
         if (!SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(plan.getSubscriptionType())) {
-            throw new ServiceException(SUBSCRIPTION_PLAN_TYPE_ERROR.getCode(), 
-                "该套餐不是积分包类型");
+            throw new ServiceException(SUBSCRIPTION_PLAN_TYPE_ERROR.getCode(),
+                    "该套餐不是积分包类型");
         }
 
         if (!Boolean.TRUE.equals(plan.getStatus())) {
@@ -83,11 +82,10 @@ public class CreditsPackService {
      */
     public boolean hasCreditsPackSubscription(Long userId) {
         SubscriptionDO subscription = subscriptionMapper.selectOne(
-            new LambdaQueryWrapper<SubscriptionDO>()
-                .eq(SubscriptionDO::getUserId, userId)
-                .eq(SubscriptionDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
-                .eq(SubscriptionDO::getStatus, true)
-        );
+                new LambdaQueryWrapper<SubscriptionDO>()
+                        .eq(SubscriptionDO::getUserId, userId)
+                        .eq(SubscriptionDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
+                        .eq(SubscriptionDO::getStatus, true));
         return subscription != null;
     }
 
@@ -96,10 +94,9 @@ public class CreditsPackService {
      */
     public SubscriptionDO getUserCreditsPackSubscription(Long userId) {
         return subscriptionMapper.selectOne(
-            new LambdaQueryWrapper<SubscriptionDO>()
-                .eq(SubscriptionDO::getUserId, userId)
-                .eq(SubscriptionDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
-                .eq(SubscriptionDO::getStatus, true)
-        );
+                new LambdaQueryWrapper<SubscriptionDO>()
+                        .eq(SubscriptionDO::getUserId, userId)
+                        .eq(SubscriptionDO::getSubscriptionType, SubscriptionTypeEnum.CREDITS_PACK.getCode())
+                        .eq(SubscriptionDO::getStatus, true));
     }
 }

@@ -119,9 +119,9 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .payOrderId(payOrderId)
                 .build());
 
-        log.info("[createPaymentOrder][用户({}) 创建支付订单成功，订单号:{}，支付单ID:{}]", 
+        log.info("[createPaymentOrder][用户({}) 创建支付订单成功，订单号:{}，支付单ID:{}]",
                 userId, orderNo, payOrderId);
-        
+
         return order.getId();
     }
 
@@ -162,13 +162,13 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .billingCycle(order.getBillingCycle())
                 .planId(order.getPlanId())
                 .build();
-        
+
         // 直接调用订阅服务处理升级逻辑
         processPaymentSuccess(completeOrder);
 
         log.info("[updateOrderPaid][订单号({}) 支付成功，支付单ID({})]", orderNo, payOrderId);
     }
-    
+
     /**
      * 处理支付成功后的业务逻辑
      *
@@ -182,32 +182,38 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
             if (plan != null) {
                 // 计算订阅时长（天数）
                 Integer paymentDuration = calculatePaymentDuration(order.getBillingCycle(), plan);
-                
+
                 // 智能升级或续费订阅（会自动处理升级规则和积分充值）
-                subscriptionService.upgradeSubscription(order.getUserId(), 
-                        order.getSubscriptionType(), 
-                        paymentDuration, 
+                subscriptionService.upgradeSubscription(order.getUserId(),
+                        order.getSubscriptionType(),
+                        paymentDuration,
                         order.getPlanId());
             }
         }
     }
-    
+
     /**
      * 根据计费周期计算付费时长
      *
      * @param billingCycle 计费周期
-     * @param plan 套餐信息
+     * @param plan         套餐信息
      * @return 付费时长（天数）
      */
     private Integer calculatePaymentDuration(Integer billingCycle, SubscriptionPlanDO plan) {
-        if (cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum.MONTHLY.getCode().equals(billingCycle)) {
-            return 30; // 月付：30天
-        } else if (cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum.YEARLY.getCode().equals(billingCycle)) {
-            return 365; // 年付：365天
-        } else if (cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum.ONE_TIME.getCode().equals(billingCycle)) {
-            return 0; // 一次性购买（积分包）：0天
+        // 优先使用套餐配置的订阅时长
+        if (plan != null && plan.getDurationDays() != null && plan.getDurationDays() > 0) {
+            return plan.getDurationDays();
         }
-        return 30; // 默认30天
+
+        // 一次性购买（积分包）：0天，表示不基于时间，永久有效
+        if (cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum.ONE_TIME.getCode().equals(billingCycle)) {
+            return 0;
+        }
+
+        // 兜底默认值，避免套餐配置缺失时出错
+        log.warn("[calculatePaymentDuration][套餐({})未配置订阅时长，使用默认值30天]",
+                plan != null ? plan.getId() : null);
+        return 30;
     }
 
     @Override
@@ -236,7 +242,7 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
     /**
      * 校验支付订单的合法性
      *
-     * @param order 订阅订单
+     * @param order      订阅订单
      * @param payOrderId 支付订单编号
      * @return 支付订单
      */

@@ -227,13 +227,19 @@ spring:
             - Path=/admin-api/data/**
           filters:
             - RewritePath=/admin-api/data/v3/api-docs, /v3/api-docs
-        ## data-server 服务
+        ## chrome-server 服务
         - id: chrome-admin-api
           uri: grayLb://chrome-server
           predicates: # 断言，作为路由的匹配条件，对应 RouteDefinition 数组
             - Path=/admin-api/chrome/**
           filters:
             - RewritePath=/admin-api/chrome/v3/api-docs, /v3/api-docs
+        - id: chrome-plugin-api
+          uri: grayLb://chrome-server
+          predicates:
+            - Path=/plugin-api/chrome/**
+          filters:
+            - RewritePath=/plugin-api/chrome/v3/api-docs, /v3/api-docs
       x-forwarded:
         prefix-enabled: false # 避免 Swagger 重复带上额外的 /admin-api/system 前缀
 

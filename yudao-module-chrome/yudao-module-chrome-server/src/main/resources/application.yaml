@@ -121,6 +121,19 @@ yudao:
     description: 提供 Chrome 插件相关功能
     version: ${yudao.info.version}
   tenant: # 多租户相关配置项
-    enable: false
+    enable: true
+    ignore-urls:
+      - /plugin-api/** # 插件的 API 接口，无法携带租户编号    
+    ignore-tables:
+      - chrome_user
+      - chrome_subscription
+      - chrome_subscription_plan
+      - chrome_subscription_order
+      - chrome_user_credits
+      - chrome_email_code
+      - chrome_usage_record
+      - chrome_credits_transaction
+      - chrome_client_server
+      - chrome_client_cookie
 
 debug: false

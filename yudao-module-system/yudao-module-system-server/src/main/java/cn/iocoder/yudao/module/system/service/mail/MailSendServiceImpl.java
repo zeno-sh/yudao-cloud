@@ -55,8 +55,8 @@ public class MailSendServiceImpl implements MailSendService {
 
     @Override
     public Long sendSingleMail(Collection<String> toMails, Collection<String> ccMails, Collection<String> bccMails,
-                               Long userId, Integer userType,
-                               String templateCode, Map<String, Object> templateParams) {
+            Long userId, Integer userType,
+            String templateCode, Map<String, Object> templateParams) {
         // 1.1 校验邮箱模版是否合法
         MailTemplateDO template = validateMailTemplate(templateCode);
         // 1.2 校验邮箱账号是否合法
@@ -69,7 +69,7 @@ public class MailSendServiceImpl implements MailSendService {
         Collection<String> toMailSet = new LinkedHashSet<>();
         Collection<String> ccMailSet = new LinkedHashSet<>();
         Collection<String> bccMailSet = new LinkedHashSet<>();
-        if (Validator.isEmail(userMail)) {
+        if (Validator.isEmail(userMail) && CollUtil.isEmpty(toMails)) {
             toMailSet.add(userMail);
         }
         if (CollUtil.isNotEmpty(toMails)) {
@@ -119,10 +119,11 @@ public class MailSendServiceImpl implements MailSendService {
     public void doSendMail(MailSendMessage message) {
         // 1. 创建发送账号
         MailAccountDO account = validateMailAccount(message.getAccountId());
-        MailAccount mailAccount  = buildMailAccount(account, message.getNickname());
+        MailAccount mailAccount = buildMailAccount(account, message.getNickname());
         // 2. 发送邮件
         try {
-            String messageId = MailUtil.send(mailAccount, message.getToMails(), message.getCcMails(), message.getBccMails(),
+            String messageId = MailUtil.send(mailAccount, message.getToMails(), message.getCcMails(),
+                    message.getBccMails(),
                     message.getTitle(), message.getContent(), true);
             // 3. 更新结果（成功）
             mailLogService.updateMailSendResult(message.getLogId(), messageId, null);
@@ -165,7 +166,7 @@ public class MailSendServiceImpl implements MailSendService {
     /**
      * 校验邮件参数是否缺失
      *
-     * @param template 邮箱模板
+     * @param template       邮箱模板
      * @param templateParams 参数列表
      */
     @VisibleForTesting

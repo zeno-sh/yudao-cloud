@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.chrome.job;
 
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
-import cn.iocoder.yudao.module.chrome.enums.SubscriptionTypeEnum;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,7 @@ import java.util.List;
  * <p>
  * 功能说明：
  * 1. 检查即将到期的订阅，发送提醒通知
- * 2. 处理已到期的订阅，自动降级为免费版
+ * 2. 记录已到期的订阅信息
  * 3. 处理自动续费逻辑
  *
  * @author Jax
@@ -83,7 +82,7 @@ public class ChromeSubscriptionExpireJob {
     }
 
     /**
-     * 处理已到期的订阅
+     * 处理已到期的订阅（只记录日志，发送通知）
      */
     private int processExpiredSubscriptions() {
         List<SubscriptionDO> expiredSubscriptions = subscriptionService.getExpiringSubscriptions(0);
@@ -92,15 +91,9 @@ public class ChromeSubscriptionExpireJob {
         for (SubscriptionDO subscription : expiredSubscriptions) {
             try {
                 if (subscription.getEndTime().isBefore(LocalDateTime.now())) {
-                    // 使用专门的到期降级方法，绕过正常的升级/降级权限检查
-                    subscriptionService.downgradeExpiredSubscription(
-                            subscription.getUserId(),
-                            SubscriptionTypeEnum.FREE.getCode(),
-                            365 // 免费版有效期1年
-                    );
-
-                    log.info("[processExpiredSubscriptions][用户({})订阅已到期，自动降级为免费版]",
-                            subscription.getUserId());
+                    // 记录到期信息，可发送邮件/短信通知用户
+                    log.info("[processExpiredSubscriptions][用户({})订阅({})已到期，结束时间: {}]",
+                            subscription.getUserId(), subscription.getId(), subscription.getEndTime());
                     expiredCount++;
                 }
             } catch (Exception e) {
@@ -108,7 +101,7 @@ public class ChromeSubscriptionExpireJob {
             }
         }
 
-        log.info("[processExpiredSubscriptions][到期订阅处理完成，处理数量: {}]", expiredCount);
+        log.info("[processExpiredSubscriptions][到期订阅通知完成，处理数量: {}]", expiredCount);
         return expiredCount;
     }
 }
