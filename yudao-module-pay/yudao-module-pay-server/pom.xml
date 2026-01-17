@@ -137,6 +137,10 @@
                         </goals>
                     </execution>
                 </executions>
+                <!-- 单体启动模式：yudao-server 引入本模块时，需要跳过 repackage -->
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>
