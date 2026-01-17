@@ -128,10 +128,22 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     /**
      * 处理订阅升级逻辑
      */
+    /**
+     * 处理订阅升级逻辑
+     */
     private Long processSubscriptionUpgrade(Long userId, SubscriptionDO currentSubscription,
             Integer newSubscriptionType, Integer newBillingCycle, Integer paymentDuration, Long planId) {
         Integer currentType = currentSubscription.getSubscriptionType();
         Integer currentBillingCycle = currentSubscription.getBillingCycle();
+
+        // 特殊处理：如果是积分包（一次性购买），不替换原有订阅，直接新增
+        if (BillingCycleEnum.ONE_TIME.getCode().equals(newBillingCycle) ||
+                SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(newSubscriptionType)) {
+            log.info("[processSubscriptionUpgrade][用户({})购买积分包，直接新增订阅，保留原订阅({})]",
+                    userId, currentSubscription.getId());
+            return createNewSubscription(userId, newSubscriptionType, newBillingCycle, paymentDuration, "购买积分包",
+                    planId);
+        }
 
         // 检查是否为相同套餐类型
         if (currentType.equals(newSubscriptionType)) {
@@ -269,7 +281,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         newSubscription.setSubscriptionType(subscriptionType);
         newSubscription.setBillingCycle(billingCycle);
         newSubscription.setPlanId(planId); // 设置planId
-        newSubscription.setStatus(true);
+
+        // 特殊处理：积分包订阅默认设为无效（仅作为记录），避免覆盖主订阅
+        if (BillingCycleEnum.ONE_TIME.getCode().equals(billingCycle) ||
+                SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(subscriptionType)) {
+            newSubscription.setStatus(false);
+            log.info("[createNewSubscription][创建积分包订阅，标记为无效状态以避免覆盖主订阅]");
+        } else {
+            newSubscription.setStatus(true);
+        }
+
         newSubscription.setStartTime(LocalDateTime.now());
 
         // 根据套餐类型和计费周期设置结束时间
@@ -491,6 +512,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         // 4. 判断购买类型
         String message;
+
+        // 特殊处理：如果是积分包（一次性购买），不涉及升级/降级逻辑，直接购买
+        if (BillingCycleEnum.ONE_TIME.getCode().equals(targetPlan.getBillingCycle()) ||
+                SubscriptionTypeEnum.CREDITS_PACK.getCode().equals(targetPlan.getSubscriptionType())) {
+            message = "购买" + targetPlan.getPlanName();
+            return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                    java.math.BigDecimal.ZERO, targetPrice, false, true, message);
+        }
 
         if (currentSubscription == null) {
             // 新用户首购

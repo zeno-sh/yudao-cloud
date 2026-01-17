@@ -37,7 +37,6 @@ public class CreditsController {
 
     @Resource
     private UsageRecordService usageRecordService;
-    
 
     @PostMapping("/consume")
     @Operation(summary = "消耗积分")
@@ -75,8 +74,7 @@ public class CreditsController {
                 userId,
                 creditsToConsume,
                 featureType.getType(),
-                businessId
-        );
+                businessId);
 
         if (!consumeSuccess) {
             log.error("[CreditsController][consumeCredits] 积分消耗失败，用户ID: {}, 积分: {}",
@@ -117,16 +115,16 @@ public class CreditsController {
     private Integer getCreditsForFeatureType(FeatureTypeEnum featureType) {
         switch (featureType) {
             case PRODUCT_COLLECT:
-                return 3;  // 商品采集消耗3积分
+                return 3; // 商品采集消耗3积分
             case COMMENT_COLLECT:
             case RUFUS:
-                return 2;  // 评论采集消耗2积分
+                return 2; // 评论采集消耗2积分
             case RANKING_COLLECT:
-                return 1;  // 排名采集消耗1积分
+                return 1; // 排名采集消耗1积分
             case FEISHU_EXPORT:
                 return 30; // 飞书导出消耗30积分
             case EXCEL_EXPORT:
-                return 15;  // Excel导出消耗15积分
+                return 15; // Excel导出消耗15积分
             default:
                 // 其他功能类型不在此接口处理范围内
                 throw new IllegalArgumentException("不支持的功能类型: " + featureType.getName() + "，该功能通过其他方式处理");
