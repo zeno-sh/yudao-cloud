@@ -419,4 +419,162 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
+    @Override
+    public java.math.BigDecimal calculateRemainingValue(Long userId) {
+        // 1. 获取当前有效订阅
+        SubscriptionDO subscription = getActiveSubscriptionByUserId(userId);
+        if (subscription == null || subscription.getPlanId() == null) {
+            log.debug("[calculateRemainingValue][用户({})无有效订阅，剩余价值为0]", userId);
+            return java.math.BigDecimal.ZERO;
+        }
+
+        // 2. 获取原套餐信息
+        SubscriptionPlanDO plan = subscriptionPlanService.getSubscriptionPlan(subscription.getPlanId());
+        if (plan == null) {
+            log.warn("[calculateRemainingValue][套餐({})不存在]", subscription.getPlanId());
+            return java.math.BigDecimal.ZERO;
+        }
+
+        // 3. 免费版无剩余价值
+        if (SubscriptionTypeEnum.FREE.getCode().equals(subscription.getSubscriptionType())) {
+            log.debug("[calculateRemainingValue][用户({})为免费版，剩余价值为0]", userId);
+            return java.math.BigDecimal.ZERO;
+        }
+
+        // 4. 计算剩余天数
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endTime = subscription.getEndTime();
+        if (endTime == null || endTime.isBefore(now)) {
+            log.debug("[calculateRemainingValue][用户({})订阅已过期，剩余价值为0]", userId);
+            return java.math.BigDecimal.ZERO;
+        }
+        long remainingDays = java.time.temporal.ChronoUnit.DAYS.between(now, endTime);
+
+        // 5. 计算剩余价值 = 原价 * (剩余天数 / 总天数)
+        Integer totalDays = plan.getDurationDays();
+        if (totalDays == null || totalDays <= 0) {
+            log.warn("[calculateRemainingValue][套餐({})未配置有效期天数]", plan.getId());
+            return java.math.BigDecimal.ZERO;
+        }
+
+        java.math.BigDecimal price = plan.getDiscountedPrice() != null ? plan.getDiscountedPrice() : plan.getPrice();
+        if (price == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+
+        java.math.BigDecimal remainingValue = price
+                .multiply(java.math.BigDecimal.valueOf(remainingDays))
+                .divide(java.math.BigDecimal.valueOf(totalDays), 2, java.math.RoundingMode.HALF_UP);
+
+        log.info("[calculateRemainingValue][用户({})套餐({})剩余{}天/共{}天，剩余价值: {}元]",
+                userId, plan.getPlanName(), remainingDays, totalDays, remainingValue);
+
+        return remainingValue;
+    }
+
+    @Override
+    public cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO calculateUpgradePrice(
+            Long userId, Long targetPlanId) {
+        // 1. 获取目标套餐
+        SubscriptionPlanDO targetPlan = subscriptionPlanService.getSubscriptionPlan(targetPlanId);
+        if (targetPlan == null) {
+            throw exception(SUBSCRIPTION_PLAN_NOT_EXISTS);
+        }
+
+        // 2. 获取当前订阅信息
+        SubscriptionDO currentSubscription = getActiveSubscriptionByUserId(userId);
+
+        // 3. 计算目标套餐价格（元）
+        java.math.BigDecimal targetPrice = targetPlan.getDiscountedPrice() != null
+                ? targetPlan.getDiscountedPrice()
+                : targetPlan.getPrice();
+
+        // 4. 判断购买类型
+        String message;
+
+        if (currentSubscription == null) {
+            // 新用户首购
+            message = "首次订阅" + targetPlan.getPlanName();
+            return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                    java.math.BigDecimal.ZERO, targetPrice, true, true, message);
+        }
+
+        // 5. 判断是续费还是升级
+        if (targetPlanId.equals(currentSubscription.getPlanId())) {
+            // 相同套餐：续费
+            message = "续费" + targetPlan.getPlanName() + "，时间将叠加";
+            return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                    java.math.BigDecimal.ZERO, targetPrice, true, true, message);
+        }
+
+        // 6. 获取当前套餐信息用于比较
+        SubscriptionPlanDO currentPlan = currentSubscription.getPlanId() != null
+                ? subscriptionPlanService.getSubscriptionPlan(currentSubscription.getPlanId())
+                : null;
+        String currentPlanName = currentPlan != null ? currentPlan.getPlanName() : "当前套餐";
+
+        // 7. 判断是升级还是降级
+        Integer currentType = currentSubscription.getSubscriptionType();
+        Integer targetType = targetPlan.getSubscriptionType();
+        Integer currentCycle = currentSubscription.getBillingCycle();
+        Integer targetCycle = targetPlan.getBillingCycle();
+
+        // 类型降级：禁止
+        if (targetType < currentType) {
+            message = "不支持从高级套餐降级到低级套餐，请等当前套餐到期后再购买";
+            return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                    java.math.BigDecimal.ZERO, targetPrice, false, false, message);
+        }
+
+        // 同类型周期降级：禁止（年付降到月付）
+        if (targetType.equals(currentType) && targetCycle != null && currentCycle != null
+                && targetCycle < currentCycle) {
+            message = "不支持从年付降级到月付，请等当前套餐到期后再购买";
+            return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                    java.math.BigDecimal.ZERO, targetPrice, false, false, message);
+        }
+
+        // 8. 升级场景：计算差价
+        java.math.BigDecimal remainingValue = calculateRemainingValue(userId);
+        java.math.BigDecimal upgradePrice = targetPrice.subtract(remainingValue);
+
+        // 差价不能为负
+        if (upgradePrice.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            upgradePrice = java.math.BigDecimal.ZERO;
+        }
+
+        if (upgradePrice.compareTo(java.math.BigDecimal.ZERO) == 0) {
+            message = "从" + currentPlanName + "升级到" + targetPlan.getPlanName() + "，无需额外付费";
+        } else {
+            message = "从" + currentPlanName + "升级到" + targetPlan.getPlanName()
+                    + "，原套餐剩余价值¥" + remainingValue.setScale(2, java.math.RoundingMode.HALF_UP)
+                    + "，只需支付差价";
+        }
+
+        log.info("[calculateUpgradePrice][用户({})升级: {} -> {}, 目标价格:{}, 剩余价值:{}, 差价:{}]",
+                userId, currentPlanName, targetPlan.getPlanName(), targetPrice, remainingValue, upgradePrice);
+
+        return buildUpgradePriceVO(targetPlanId, targetPlan.getPlanName(), targetPrice,
+                remainingValue, upgradePrice, false, true, message);
+    }
+
+    /**
+     * 构建升级价格VO
+     */
+    private cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO buildUpgradePriceVO(
+            Long targetPlanId, String targetPlanName, java.math.BigDecimal originalPrice,
+            java.math.BigDecimal remainingValue, java.math.BigDecimal upgradePrice,
+            Boolean isRenewal, Boolean isUpgrade, String message) {
+        return cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO.builder()
+                .targetPlanId(targetPlanId)
+                .targetPlanName(targetPlanName)
+                .originalPrice(originalPrice)
+                .remainingValue(remainingValue)
+                .upgradePrice(upgradePrice)
+                .isRenewal(isRenewal)
+                .isUpgrade(isUpgrade)
+                .message(message)
+                .build();
+    }
+
 }

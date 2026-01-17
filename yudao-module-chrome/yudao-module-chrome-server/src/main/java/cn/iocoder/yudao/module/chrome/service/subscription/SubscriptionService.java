@@ -93,4 +93,22 @@ public interface SubscriptionService {
      */
     void invalidateUserSubscriptions(Long userId);
 
+    /**
+     * 计算当前订阅的剩余价值（元）
+     *
+     * @param userId 用户ID
+     * @return 剩余价值（元），如无有效订阅返回0
+     */
+    java.math.BigDecimal calculateRemainingValue(Long userId);
+
+    /**
+     * 计算升级到指定套餐需要支付的价格信息
+     *
+     * @param userId       用户ID
+     * @param targetPlanId 目标套餐ID
+     * @return 升级价格信息
+     */
+    cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO calculateUpgradePrice(Long userId,
+            Long targetPlanId);
+
 }

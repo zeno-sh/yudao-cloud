@@ -77,14 +77,35 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
         Assert.notNull(plan, "套餐({})不存在", createReqVO.getPlanId());
         Assert.isTrue(plan.getStatus(), "套餐({})已禁用", createReqVO.getPlanId());
 
-        // 1.2 计算实际支付金额（分）
-        BigDecimal actualPrice = plan.getDiscountedPrice() != null ? plan.getDiscountedPrice() : plan.getPrice();
-        Integer payPrice = actualPrice.multiply(BigDecimal.valueOf(100)).intValue(); // 转换为分
+        // 1.2 计算升级价格（差价）
+        cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO upgradePriceVO = subscriptionService
+                .calculateUpgradePrice(userId, createReqVO.getPlanId());
 
-        // 1.3 生成订单号
+        // 1.3 校验是否允许购买（降级场景禁止）
+        if (!Boolean.TRUE.equals(upgradePriceVO.getIsUpgrade())) {
+            log.warn("[createPaymentOrder][用户({})尝试降级购买套餐({})，被禁止: {}]",
+                    userId, createReqVO.getPlanId(), upgradePriceVO.getMessage());
+            throw cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception(
+                    cn.iocoder.yudao.module.chrome.enums.ErrorCodeConstants.SUBSCRIPTION_DOWNGRADE_NOT_ALLOWED);
+        }
+
+        // 1.4 获取实际支付金额（元 -> 分）
+        BigDecimal actualPrice = upgradePriceVO.getUpgradePrice();
+        Integer payPrice = actualPrice.multiply(BigDecimal.valueOf(100)).intValue();
+
+        // 1.5 如果差价为0，直接处理订阅（免费升级）
+        if (payPrice <= 0) {
+            log.info("[createPaymentOrder][用户({})免费升级套餐({})]", userId, createReqVO.getPlanId());
+            // 直接调用订阅升级
+            Integer paymentDuration = calculatePaymentDuration(plan.getBillingCycle(), plan);
+            subscriptionService.upgradeSubscription(userId, plan.getSubscriptionType(), paymentDuration, plan.getId());
+            return -1L; // 返回特殊值表示免费升级，无需支付
+        }
+
+        // 1.6 生成订单号
         String orderNo = generateOrderNo(userId);
 
-        // 2.1 创建订阅订单
+        // 2.1 创建订阅订单（记录原价和实际支付价格）
         SubscriptionOrderDO order = SubscriptionOrderDO.builder()
                 .orderNo(orderNo)
                 .userId(userId)
@@ -92,8 +113,8 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .subscriptionType(plan.getSubscriptionType())
                 .billingCycle(plan.getBillingCycle())
                 .credits(plan.getCredits())
-                .originalPrice(plan.getPrice())
-                .actualPrice(actualPrice)
+                .originalPrice(upgradePriceVO.getOriginalPrice()) // 目标套餐原价
+                .actualPrice(actualPrice) // 实际支付差价
                 .currency(plan.getCurrency())
                 .paymentMethod(PaymentMethodEnum.ALIPAY.getCode()) // 主要使用支付宝
                 .paymentStatus(PaymentStatusEnum.PENDING.getCode()) // 待支付
@@ -109,7 +130,7 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .setUserType(UserTypeEnum.PLUGIN.getValue()) // 用户类型
                 .setMerchantOrderId(orderNo) // 业务订单编号（使用订单号）
                 .setSubject(buildOrderSubject(plan)) // 订单标题
-                .setBody(buildOrderBody(plan)) // 订单描述
+                .setBody(buildUpgradeOrderBody(plan, upgradePriceVO)) // 订单描述（含差价信息）
                 .setPrice(payPrice) // 支付金额（分）
                 .setExpireTime(order.getExpireTime())).getData(); // 过期时间
 
@@ -119,8 +140,8 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .payOrderId(payOrderId)
                 .build());
 
-        log.info("[createPaymentOrder][用户({}) 创建支付订单成功，订单号:{}，支付单ID:{}]",
-                userId, orderNo, payOrderId);
+        log.info("[createPaymentOrder][用户({}) 创建支付订单成功，订单号:{}，支付单ID:{}，原价:{}，差价:{}]",
+                userId, orderNo, payOrderId, upgradePriceVO.getOriginalPrice(), actualPrice);
 
         return order.getId();
     }
@@ -310,5 +331,24 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
      */
     private String buildOrderBody(SubscriptionPlanDO plan) {
         return "购买" + plan.getCredits() + "积分";
+    }
+
+    /**
+     * 构建升级订单描述（含差价信息）
+     *
+     * @param plan           套餐信息
+     * @param upgradePriceVO 升级价格信息
+     * @return 订单描述
+     */
+    private String buildUpgradeOrderBody(SubscriptionPlanDO plan,
+            cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO upgradePriceVO) {
+        if (Boolean.TRUE.equals(upgradePriceVO.getIsRenewal())) {
+            return "续费" + plan.getPlanName();
+        }
+        if (upgradePriceVO.getRemainingValue() != null
+                && upgradePriceVO.getRemainingValue().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            return "升级至" + plan.getPlanName() + "（差价支付）";
+        }
+        return "购买" + plan.getPlanName();
     }
 }
