@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.chrome.service.order;
 
+import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -78,8 +79,19 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
                 Integer paymentDuration = calculatePaymentDuration(order.getBillingCycle(), plan);
 
                 // 智能升级或续费订阅（会自动处理升级规则和积分充值）
-                subscriptionService.upgradeSubscription(order.getUserId(), order.getSubscriptionType(), paymentDuration,
+                Long subscriptionId = subscriptionService.upgradeSubscription(order.getUserId(),
+                        order.getSubscriptionType(), paymentDuration,
                         order.getPlanId());
+
+                // 更新订单的过期时间（记录本次充值对应的订阅结束时间）
+                SubscriptionDO subscription = subscriptionService.getSubscription(subscriptionId);
+                if (subscription != null) {
+                    SubscriptionOrderDO updateOrder = SubscriptionOrderDO.builder()
+                            .id(order.getId())
+                            .expireTime(subscription.getEndTime())
+                            .build();
+                    subscriptionOrderMapper.updateById(updateOrder);
+                }
             }
         }
     }
@@ -156,6 +168,16 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
     @Override
     public PageResult<SubscriptionOrderDO> getSubscriptionOrderPage(SubscriptionOrderPageReqVO pageReqVO) {
         return subscriptionOrderMapper.selectPage(pageReqVO);
+    }
+
+    @Override
+    public PageResult<SubscriptionOrderDO> getPaidOrdersByUserId(Long userId, PageParam pageReqVO) {
+        SubscriptionOrderPageReqVO reqVO = new SubscriptionOrderPageReqVO();
+        reqVO.setUserId(userId);
+        reqVO.setPaymentStatus(20); // 已支付
+        reqVO.setPageNo(pageReqVO.getPageNo());
+        reqVO.setPageSize(pageReqVO.getPageSize());
+        return subscriptionOrderMapper.selectPage(reqVO);
     }
 
 }

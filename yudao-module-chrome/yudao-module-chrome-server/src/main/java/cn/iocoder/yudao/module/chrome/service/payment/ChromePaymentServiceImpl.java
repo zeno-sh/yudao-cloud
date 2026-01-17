@@ -7,6 +7,7 @@ import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.module.chrome.controller.plugin.payment.vo.ChromePaymentCreateReqVO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.order.SubscriptionOrderDO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.plan.SubscriptionPlanDO;
+import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
 import cn.iocoder.yudao.module.chrome.dal.mysql.order.SubscriptionOrderMapper;
 import cn.iocoder.yudao.module.chrome.enums.PaymentMethodEnum;
 import cn.iocoder.yudao.module.chrome.enums.PaymentStatusEnum;
@@ -205,10 +206,20 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 Integer paymentDuration = calculatePaymentDuration(order.getBillingCycle(), plan);
 
                 // 智能升级或续费订阅（会自动处理升级规则和积分充值）
-                subscriptionService.upgradeSubscription(order.getUserId(),
+                Long subscriptionId = subscriptionService.upgradeSubscription(order.getUserId(),
                         order.getSubscriptionType(),
                         paymentDuration,
                         order.getPlanId());
+
+                // 更新订单的过期时间（记录本次充值对应的订阅结束时间）
+                SubscriptionDO subscription = subscriptionService.getSubscription(subscriptionId);
+                if (subscription != null) {
+                    SubscriptionOrderDO updateOrder = SubscriptionOrderDO.builder()
+                            .id(order.getId())
+                            .expireTime(subscription.getEndTime())
+                            .build();
+                    subscriptionOrderMapper.updateById(updateOrder);
+                }
             }
         }
     }

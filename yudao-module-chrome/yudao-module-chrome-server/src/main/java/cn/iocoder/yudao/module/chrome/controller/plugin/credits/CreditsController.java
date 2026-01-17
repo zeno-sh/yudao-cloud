@@ -9,6 +9,9 @@ import cn.iocoder.yudao.module.chrome.controller.plugin.credits.vo.ConsumeCredit
 import cn.iocoder.yudao.module.chrome.enums.FeatureTypeEnum;
 import cn.iocoder.yudao.module.chrome.service.credits.UserCreditsService;
 import cn.iocoder.yudao.module.chrome.service.usage.UsageRecordService;
+import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
+import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
+import cn.iocoder.yudao.module.chrome.enums.SubscriptionTypeEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,9 @@ public class CreditsController {
     @Resource
     private UsageRecordService usageRecordService;
 
+    @Resource
+    private SubscriptionService subscriptionService;
+
     @PostMapping("/consume")
     @Operation(summary = "消耗积分")
     @ApiAccessLog(operateType = OperateTypeEnum.GET)
@@ -60,6 +66,19 @@ public class CreditsController {
 
         // 3. 计算需要消耗的积分
         Integer creditsToConsume = getCreditsForFeatureType(featureType);
+
+        // 检查用户是否有付费订阅，如果有付费订阅且功能属于免费范围，则消耗0积分
+        // 目前策略：RUFUS相关功能对基础版及以上用户免费
+        if (isFreeForSubscriber(featureType)) {
+            SubscriptionDO activeSubscription = subscriptionService.getActiveSubscriptionByUserId(userId);
+            if (activeSubscription != null && activeSubscription.getStatus()) {
+                Integer subscriptionType = activeSubscription.getSubscriptionType();
+                // 基础版(20)及以上为付费订阅，免费版(10)除外
+                if (subscriptionType != null && subscriptionType >= SubscriptionTypeEnum.BASIC.getCode()) {
+                    creditsToConsume = 0;
+                }
+            }
+        }
 
         // 4. 检查积分余额
         if (!userCreditsService.hasEnoughCredits(userId, creditsToConsume)) {
@@ -131,6 +150,19 @@ public class CreditsController {
         }
     }
 
+    /**
+     * 判断功能是否对付费订阅用户免费
+     */
+    private boolean isFreeForSubscriber(FeatureTypeEnum featureType) {
+        switch (featureType) {
+            case RUFUS:
+                return true;
+            // 可以添加其他对会员免费的功能
+            default:
+                return false;
+        }
+    }
+
     @GetMapping("/check")
     @Operation(summary = "检查积分是否足够")
     @ApiAccessLog(operateType = OperateTypeEnum.GET)
@@ -153,6 +185,17 @@ public class CreditsController {
 
         // 获取该功能需要消耗的积分数
         Integer creditsRequired = getCreditsForFeatureType(featureTypeEnum);
+
+        // 检查用户是否有付费订阅，如果有付费订阅且功能属于免费范围，则消耗0积分
+        if (isFreeForSubscriber(featureTypeEnum)) {
+            SubscriptionDO activeSubscription = subscriptionService.getActiveSubscriptionByUserId(userId);
+            if (activeSubscription != null && activeSubscription.getStatus()) {
+                Integer subscriptionType = activeSubscription.getSubscriptionType();
+                if (subscriptionType != null && subscriptionType >= SubscriptionTypeEnum.BASIC.getCode()) {
+                    creditsRequired = 0;
+                }
+            }
+        }
 
         // 检查积分是否足够
         boolean sufficient = userCreditsService.hasEnoughCredits(userId, creditsRequired);

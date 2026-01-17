@@ -109,6 +109,11 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
         return subscriptionPlanMapper.selectList("status", true);
     }
 
+    @Override
+    public List<SubscriptionPlanDO> getSubscriptionPlanList(Collection<Long> ids) {
+        return subscriptionPlanMapper.selectBatchIds(ids);
+    }
+
     /**
      * 计算折扣后价格
      * 

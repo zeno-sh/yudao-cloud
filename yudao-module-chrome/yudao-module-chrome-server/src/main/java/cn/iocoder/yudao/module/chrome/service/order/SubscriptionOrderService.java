@@ -52,4 +52,13 @@ public interface SubscriptionOrderService {
      */
     PageResult<SubscriptionOrderDO> getSubscriptionOrderPage(SubscriptionOrderPageReqVO pageReqVO);
 
+    /**
+     * 获得指定用户的已支付订单分页
+     *
+     * @param userId    用户ID
+     * @param pageReqVO 分页参数
+     * @return 订单分页
+     */
+    PageResult<SubscriptionOrderDO> getPaidOrdersByUserId(Long userId, PageParam pageReqVO);
+
 }

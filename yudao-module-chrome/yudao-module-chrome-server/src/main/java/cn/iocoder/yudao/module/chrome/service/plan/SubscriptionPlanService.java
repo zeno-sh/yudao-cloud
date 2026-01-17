@@ -66,4 +66,12 @@ public interface SubscriptionPlanService {
      */
     List<SubscriptionPlanDO> getEnabledSubscriptionPlans();
 
+    /**
+     * 获得订阅套餐配置列表
+     *
+     * @param ids 编号列表
+     * @return 订阅套餐配置列表
+     */
+    List<SubscriptionPlanDO> getSubscriptionPlanList(Collection<Long> ids);
+
 }
