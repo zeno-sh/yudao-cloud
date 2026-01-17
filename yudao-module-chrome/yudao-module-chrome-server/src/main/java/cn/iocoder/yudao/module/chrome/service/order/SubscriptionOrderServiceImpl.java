@@ -1,14 +1,11 @@
 package cn.iocoder.yudao.module.chrome.service.order;
 
 import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
-import cn.iocoder.yudao.module.chrome.service.referral.ReferralService;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
 import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.chrome.controller.admin.order.vo.*;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.order.SubscriptionOrderDO;
@@ -18,7 +15,6 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.chrome.dal.mysql.order.SubscriptionOrderMapper;
-import cn.iocoder.yudao.module.chrome.service.credits.UserCreditsService;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
 import cn.iocoder.yudao.module.chrome.service.plan.SubscriptionPlanService;
 import cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum;
@@ -39,9 +35,6 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
 
     @Resource
     private SubscriptionOrderMapper subscriptionOrderMapper;
-
-    @Resource
-    private UserCreditsService userCreditsService;
 
     @Resource
     private SubscriptionService subscriptionService;
@@ -94,9 +87,6 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
                             .build();
                     subscriptionOrderMapper.updateById(updateOrder);
                 }
-
-                // [NEW] 触发推广奖励逻辑 (异步)
-                referralService.processPaySuccessAsync(order);
             }
         }
     }
@@ -185,10 +175,6 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         return subscriptionOrderMapper.selectPage(reqVO);
     }
 
-    @Resource
-    @Lazy
-    private ReferralService referralService;
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createFreeRewardOrder(Long userId, int days, Long planId, Integer subscriptionType) {
@@ -215,6 +201,7 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         order.setPaymentStatus(20); // 直接已支付
         order.setPaymentTime(LocalDateTime.now());
         order.setPaymentMethod(30); // 其他
+        order.setCredits(0);
 
         subscriptionOrderMapper.insert(order);
 

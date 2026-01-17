@@ -12,6 +12,7 @@ import cn.iocoder.yudao.module.chrome.dal.mysql.order.SubscriptionOrderMapper;
 import cn.iocoder.yudao.module.chrome.enums.PaymentMethodEnum;
 import cn.iocoder.yudao.module.chrome.enums.PaymentStatusEnum;
 import cn.iocoder.yudao.module.chrome.service.plan.SubscriptionPlanService;
+import cn.iocoder.yudao.module.chrome.service.referral.ReferralService;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
 import cn.iocoder.yudao.module.chrome.service.user.UserService;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.user.UserDO;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import org.springframework.context.annotation.Lazy;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -65,6 +67,10 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    @Lazy // 避免循环依赖
+    private ReferralService referralService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -175,14 +181,14 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
         subscriptionOrderMapper.updateById(updateOrder);
 
         // 4. 处理订单支付后的业务逻辑（订阅升级、积分充值等）
-        // 注意：这里会调用SubscriptionOrderService内部处理订单支付的逻辑
-        // 通过重新设置订单的完整信息，让processOrderPayment方法能够正确处理
+        // 注意：需要传递完整的订单信息，包括actualPrice用于佣金计算
         SubscriptionOrderDO completeOrder = SubscriptionOrderDO.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
                 .subscriptionType(order.getSubscriptionType())
                 .billingCycle(order.getBillingCycle())
                 .planId(order.getPlanId())
+                .actualPrice(order.getActualPrice()) // 用于推荐佣金计算
                 .build();
 
         // 直接调用订阅服务处理升级逻辑
@@ -220,6 +226,9 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                             .build();
                     subscriptionOrderMapper.updateById(updateOrder);
                 }
+
+                // 异步触发推广奖励逻辑（处理推荐人佣金和被推荐人15天赠送）
+                referralService.processPaySuccessAsync(order);
             }
         }
     }
