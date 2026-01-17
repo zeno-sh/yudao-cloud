@@ -35,7 +35,6 @@ public interface SubscriptionMapper extends BaseMapperX<SubscriptionDO> {
         return selectOne(new LambdaQueryWrapperX<SubscriptionDO>()
                 .eq(SubscriptionDO::getUserId, userId)
                 .eq(SubscriptionDO::getStatus, 1) // 1表示有效状态
-                .gt(SubscriptionDO::getEndTime, LocalDateTime.now())
                 .orderByDesc(SubscriptionDO::getEndTime)
                 .last("LIMIT 1"));
     }

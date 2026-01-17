@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.chrome.controller.plugin.subscription;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.chrome.controller.plugin.subscription.vo.UpgradePriceVO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.user.UserDO;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
 import cn.iocoder.yudao.module.chrome.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,6 +62,17 @@ public class PluginSubscriptionController {
                 email, targetPlanId, upgradePriceVO);
 
         return success(upgradePriceVO);
+    }
+
+    @GetMapping("/check-status")
+    @Operation(summary = "校验订阅状态", description = "检查当前登录用户的订阅是否有效")
+    public CommonResult<Boolean> checkSubscriptionStatus() {
+        Long userId = SecurityFrameworkUtils.getLoginUserId();
+        if (userId == null) {
+            return success(false);
+        }
+        boolean isValid = subscriptionService.validateSubscriptionStatus(userId);
+        return success(isValid);
     }
 
 }

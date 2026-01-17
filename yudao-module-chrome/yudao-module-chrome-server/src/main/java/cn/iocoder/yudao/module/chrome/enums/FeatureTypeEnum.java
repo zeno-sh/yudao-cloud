@@ -51,7 +51,12 @@ public enum FeatureTypeEnum {
     /**
      * Excel导出 - 对应数据库值 80
      */
-    EXCEL_EXPORT(80, "Excel导出");
+    EXCEL_EXPORT(80, "Excel导出"),
+
+    /**
+     * RUFUS 数据采集
+     */
+    RUFUS(90, "RUFUS 数据采集");
 
     /**
      * 功能类型代码（对应数据库值）

@@ -119,6 +119,7 @@ public class CreditsController {
             case PRODUCT_COLLECT:
                 return 3;  // 商品采集消耗3积分
             case COMMENT_COLLECT:
+            case RUFUS:
                 return 2;  // 评论采集消耗2积分
             case RANKING_COLLECT:
                 return 1;  // 排名采集消耗1积分
