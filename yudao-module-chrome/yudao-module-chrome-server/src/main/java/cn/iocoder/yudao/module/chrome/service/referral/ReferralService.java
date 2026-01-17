@@ -35,4 +35,23 @@ public interface ReferralService {
      */
     void processPaySuccessAsync(SubscriptionOrderDO order);
 
+    /**
+     * 获取用户的推广信息 (code, 邀请人数, 佣金)
+     *
+     * @param userId 用户 ID
+     * @return 推广信息
+     */
+    cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralInfoRespVO getReferralInfo(Long userId);
+
+    /**
+     * 分页查询佣金记录
+     *
+     * @param reqVO  查询条件
+     * @param userId 用户 ID
+     * @return 佣金记录分页
+     */
+    cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordRespVO> getReferralRecordPage(
+            cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordPageReqVO reqVO,
+            Long userId);
+
 }

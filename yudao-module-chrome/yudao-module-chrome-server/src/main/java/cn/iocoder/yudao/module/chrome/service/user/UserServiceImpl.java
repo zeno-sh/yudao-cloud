@@ -183,4 +183,9 @@ public class UserServiceImpl implements UserService {
         return chromeUserMapper.selectOne(UserDO::getReferralCode, referralCode);
     }
 
+    @Override
+    public Long countByReferrer(Long referrerUserId) {
+        return chromeUserMapper.selectCountByReferrer(referrerUserId);
+    }
+
 }

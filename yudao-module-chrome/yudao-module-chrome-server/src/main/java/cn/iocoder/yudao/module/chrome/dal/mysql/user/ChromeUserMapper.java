@@ -86,13 +86,13 @@ public interface ChromeUserMapper extends BaseMapperX<UserDO> {
      * 统计日期范围内的新增用户数
      *
      * @param startDate 开始日期
-     * @param endDate 结束日期
+     * @param endDate   结束日期
      * @return 新增用户数
      */
     @org.apache.ibatis.annotations.Select("SELECT COUNT(*) FROM chrome_user " +
             "WHERE DATE(create_time) >= #{startDate} AND DATE(create_time) <= #{endDate} AND deleted = 0")
     int countNewUsersByDateRange(@org.apache.ibatis.annotations.Param("startDate") String startDate,
-                                  @org.apache.ibatis.annotations.Param("endDate") String endDate);
+            @org.apache.ibatis.annotations.Param("endDate") String endDate);
 
     /**
      * 统计近N天每日新增用户数
@@ -104,6 +104,11 @@ public interface ChromeUserMapper extends BaseMapperX<UserDO> {
             "FROM chrome_user " +
             "WHERE DATE(create_time) >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) AND deleted = 0 " +
             "GROUP BY DATE(create_time) ORDER BY date")
-    java.util.List<java.util.Map<String, Object>> countDailyNewUsers(@org.apache.ibatis.annotations.Param("days") int days);
+    java.util.List<java.util.Map<String, Object>> countDailyNewUsers(
+            @org.apache.ibatis.annotations.Param("days") int days);
+
+    default Long selectCountByReferrer(Long referrerUserId) {
+        return selectCount(UserDO::getReferrerUserId, referrerUserId);
+    }
 
 }

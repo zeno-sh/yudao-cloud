@@ -107,4 +107,12 @@ public interface UserService {
      */
     UserDO getUserByReferralCode(String referralCode);
 
+    /**
+     * 统计指定推荐人的邀请人数
+     *
+     * @param referrerUserId 推荐人用户ID
+     * @return 邀请人数
+     */
+    Long countByReferrer(Long referrerUserId);
+
 }

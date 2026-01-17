@@ -1,7 +1,11 @@
 package cn.iocoder.yudao.module.chrome.controller.plugin.referral;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralInfoRespVO;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordPageReqVO;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordRespVO;
 import cn.iocoder.yudao.module.chrome.service.referral.ReferralService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,11 +38,17 @@ public class ReferralController {
 
     @GetMapping("/info")
     @Operation(summary = "获取我的推广信息")
-    public CommonResult<String> getReferralInfo() {
+    public CommonResult<ChromeReferralInfoRespVO> getReferralInfo() {
         Long userId = SecurityFrameworkUtils.getLoginUserId();
-        // 目前暂只返回code，后续可扩展返回 Vo {code, count, amount}
-        String code = referralService.getReferralCode(userId);
-        return success(code);
+        return success(referralService.getReferralInfo(userId));
+    }
+
+    @GetMapping("/records")
+    @Operation(summary = "分页查询推广佣金记录")
+    public CommonResult<PageResult<ChromeReferralRecordRespVO>> getReferralRecordPage(
+            @Validated ChromeReferralRecordPageReqVO reqVO) {
+        Long userId = SecurityFrameworkUtils.getLoginUserId();
+        return success(referralService.getReferralRecordPage(reqVO, userId));
     }
 
 }

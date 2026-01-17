@@ -15,6 +15,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralInfoRespVO;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordPageReqVO;
+import cn.iocoder.yudao.module.chrome.controller.plugin.referral.vo.ChromeReferralRecordRespVO;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 
 /**
  * 推广分销 Service 实现类
@@ -57,9 +63,6 @@ public class ReferralServiceImpl implements ReferralService {
         for (int i = 0; i < 5; i++) {
             String tempCode = cn.hutool.core.util.RandomUtil.randomString(6).toUpperCase();
             // 检查是否存在
-            // 需在UserService添加根据ReferralCode查询的方法，或者直接用Mapper
-            // 这里暂且假设冲突概率极低，直接更新，如果冲突会报Only one异常（已加唯一索引）
-            // 更好的是先check
             code = tempCode;
             break; // 简化处理，实际应check
         }
@@ -102,8 +105,6 @@ public class ReferralServiceImpl implements ReferralService {
 
         // 1. 发放被推广者奖励：赠送15天会员
         // 逻辑：判断是否是首单（排除当前订单，查询已支付订单数）
-        // 如果当前订单是第一笔支付成功的订单，则发放奖励
-        // 注意：processPaySuccessAsync 是在支付成功后调用的，此时当前订单状态应该已经是20
         Long paidCount = subscriptionOrderMapper.selectCount(new LambdaQueryWrapperX<SubscriptionOrderDO>()
                 .eq(SubscriptionOrderDO::getUserId, userId)
                 .eq(SubscriptionOrderDO::getPaymentStatus, 20)); // 20=已支付
@@ -147,13 +148,46 @@ public class ReferralServiceImpl implements ReferralService {
             log.info("[giveFreeDuration] 开始赠送免费时长，OrderId: {}, Days: {}", order.getId(), days);
 
             // 直接使用当前订单的 planId 和 subscriptionType 进行赠送
-            // 这样确保赠送的是用户刚刚购买的同类型套餐时长
             subscriptionOrderService.createFreeRewardOrder(order.getUserId(), days, order.getPlanId(),
                     order.getSubscriptionType());
 
         } catch (Exception e) {
             log.error("[giveFreeDuration] 赠送失败", e);
         }
+    }
+
+    @Override
+    public ChromeReferralInfoRespVO getReferralInfo(Long userId) {
+        UserDO user = userService.getUser(userId);
+        if (user == null) {
+            return null;
+        }
+
+        ChromeReferralInfoRespVO respVO = new ChromeReferralInfoRespVO();
+        respVO.setCode(user.getReferralCode());
+        // 统计邀请人数
+        respVO.setInviteeCount(userService.countByReferrer(userId));
+        // 统计累计收益
+        BigDecimal totalCommission = commissionRecordMapper.selectSumAmountByReferrer(userId);
+        respVO.setTotalCommission(totalCommission != null ? totalCommission : BigDecimal.ZERO);
+
+        return respVO;
+    }
+
+    @Override
+    public PageResult<ChromeReferralRecordRespVO> getReferralRecordPage(ChromeReferralRecordPageReqVO reqVO,
+            Long userId) {
+        // 分页查询佣金记录
+        PageResult<CommissionRecordDO> pageResult = commissionRecordMapper.selectPage(reqVO,
+                new LambdaQueryWrapperX<CommissionRecordDO>()
+                        .eq(CommissionRecordDO::getReferrerUserId, userId)
+                        .orderByDesc(CommissionRecordDO::getCreateTime));
+
+        if (CollectionUtils.isAnyEmpty(pageResult.getList())) {
+            return PageResult.empty();
+        }
+
+        return BeanUtils.toBean(pageResult, ChromeReferralRecordRespVO.class);
     }
 
 }
