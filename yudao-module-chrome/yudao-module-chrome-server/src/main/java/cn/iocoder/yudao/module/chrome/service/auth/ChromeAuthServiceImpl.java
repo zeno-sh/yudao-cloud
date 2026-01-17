@@ -120,7 +120,6 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         return this.createTokenAfterLoginSuccess(user.getId(), clientIP, userAgent);
     }
 
-
     private void updateUserLogin(Long userId, String clientIP) {
         UserDO updateObj = new UserDO();
         updateObj.setId(userId);
@@ -173,7 +172,8 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
 
     @Override
     public ChromeAuthLoginRespVO refreshToken(String refreshToken) {
-        OAuth2AccessTokenRespDTO accessTokenDO = oauth2TokenApi.refreshAccessToken(refreshToken, "chrome-web").getData();
+        OAuth2AccessTokenRespDTO accessTokenDO = oauth2TokenApi.refreshAccessToken(refreshToken, "chrome-web")
+                .getData();
         return ChromeAuthLoginRespVO.builder()
                 .accessToken(accessTokenDO.getAccessToken())
                 .refreshToken(accessTokenDO.getRefreshToken())
@@ -194,7 +194,8 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         }
 
         // 1.2 获得订阅信息
-        SubscriptionDO subscription = subscriptionService.getActiveSubscriptionByUserId(Long.valueOf(loginUser.getId()));
+        SubscriptionDO subscription = subscriptionService
+                .getActiveSubscriptionByUserId(Long.valueOf(loginUser.getId()));
 
         // 2. 拼接结果返回
         return ChromeAuthLoginRespVO.builder()
@@ -279,7 +280,6 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         log.info("[createLogoutLog][userId({})]", userId);
     }
 
-
     @Override
     public ChromeAuthRegisterRespVO register(ChromeAuthRegisterReqVO reqVO, String clientIP, String userAgent) {
 
@@ -297,9 +297,9 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         }
 
         // 校验密码确认
-//        if (!reqVO.getPassword().equals(reqVO.getConfirmPassword())) {
-//            throw exception(PASSWORD_CONFIRM_NOT_MATCH);
-//        }
+        // if (!reqVO.getPassword().equals(reqVO.getConfirmPassword())) {
+        // throw exception(PASSWORD_CONFIRM_NOT_MATCH);
+        // }
 
         // 创建用户
         UserSaveReqVO userSaveReqVO = new UserSaveReqVO();
@@ -310,6 +310,11 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
         userSaveReqVO.setStatus(CommonStatusEnum.ENABLE.getStatus() == 0);
 
         Long userId = userService.createUser(userSaveReqVO);
+
+        // 处理推广码逻辑
+        if (StrUtil.isNotBlank(reqVO.getReferralCode())) {
+            this.handleReferralBinding(userId, reqVO.getReferralCode());
+        }
 
         // 获取创建的用户信息
         UserDO user = userService.getUser(userId);
@@ -406,7 +411,7 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
     private void createFreeSubscriptionAndCredits(Long userId) {
         try {
             log.info("[createFreeSubscriptionAndCredits][为用户({})创建免费套餐和初始积分]", userId);
-            
+
             // 1. 创建免费订阅套餐
             cn.iocoder.yudao.module.chrome.controller.admin.subscription.vo.SubscriptionSaveReqVO subscriptionReqVO = new cn.iocoder.yudao.module.chrome.controller.admin.subscription.vo.SubscriptionSaveReqVO();
             subscriptionReqVO.setUserId(userId);
@@ -417,17 +422,35 @@ public class ChromeAuthServiceImpl implements ChromeAuthService {
             subscriptionReqVO.setEndTime(LocalDateTime.now().plusYears(100));
             subscriptionReqVO.setPaymentDuration(36500); // 100年
             subscriptionReqVO.setAutoRenew(false);
-            
+
             subscriptionService.createSubscription(subscriptionReqVO);
             log.info("[createFreeSubscriptionAndCredits][用户({})免费套餐创建成功]", userId);
-            
+
             // 2. 初始化用户积分账户（10积分）
             userCreditsService.initUserCredits(userId);
             log.info("[createFreeSubscriptionAndCredits][用户({})初始积分账户创建成功，获得10积分]", userId);
-            
+
         } catch (Exception e) {
             log.error("[createFreeSubscriptionAndCredits][用户({})创建免费套餐和积分失败]", userId, e);
             // 这里不抛出异常，避免影响注册流程
+        }
+    }
+
+    private void handleReferralBinding(Long userId, String referralCode) {
+        try {
+            UserDO referrer = userService.getUserByReferralCode(referralCode);
+            if (referrer != null) {
+                // 绑定关系
+                UserDO updateObj = new UserDO();
+                updateObj.setId(userId);
+                updateObj.setReferrerUserId(referrer.getId());
+                userService.updateUser(updateObj);
+                log.info("[handleReferralBinding][用户({})成功绑定推荐人({})]", userId, referrer.getId());
+            } else {
+                log.warn("[handleReferralBinding][用户({})填写的推广码({})无效]", userId, referralCode);
+            }
+        } catch (Exception e) {
+            log.error("[handleReferralBinding][用户({})绑定推荐关系失败]", userId, e);
         }
     }
 

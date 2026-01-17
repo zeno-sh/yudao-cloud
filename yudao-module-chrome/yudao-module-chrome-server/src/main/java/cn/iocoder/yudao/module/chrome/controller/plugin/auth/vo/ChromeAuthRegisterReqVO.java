@@ -36,7 +36,7 @@ public class ChromeAuthRegisterReqVO {
 
     @Schema(description = "确认密码", requiredMode = Schema.RequiredMode.REQUIRED, example = "123456")
     // TODO：客户端bug，没有上传
-//    @NotEmpty(message = "确认密码不能为空")
+    // @NotEmpty(message = "确认密码不能为空")
     private String confirmPassword;
 
     @Schema(description = "昵称", example = "用户昵称")
@@ -49,5 +49,8 @@ public class ChromeAuthRegisterReqVO {
 
     @Schema(description = "设备令牌", example = "device_token_123")
     private String deviceToken;
+
+    @Schema(description = "推广码", example = "ABC1234")
+    private String referralCode;
 
 }

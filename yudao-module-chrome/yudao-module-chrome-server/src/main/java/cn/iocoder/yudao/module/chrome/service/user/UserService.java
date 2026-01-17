@@ -70,7 +70,7 @@ public interface UserService {
     /**
      * 更新用户密码
      *
-     * @param id 用户ID
+     * @param id       用户ID
      * @param password 新密码
      */
     void updateUserPassword(Long id, String password);
@@ -98,5 +98,13 @@ public interface UserService {
      * @return 是否存在
      */
     boolean isDeviceTokenExists(String deviceToken);
+
+    /**
+     * 根据推广码获得用户
+     *
+     * @param referralCode 推广码
+     * @return 用户
+     */
+    UserDO getUserByReferralCode(String referralCode);
 
 }

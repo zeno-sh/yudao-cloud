@@ -33,13 +33,13 @@ public class UserServiceImpl implements UserService {
 
     @Resource
     private ChromeUserMapper chromeUserMapper;
-    
+
     @Resource
     private SubscriptionService subscriptionService;
-    
+
     @Resource
     private UserCreditsService userCreditsService;
-    
+
     @Resource
     private UsageRecordService usageRecordService;
 
@@ -65,11 +65,11 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         // 校验存在
         validateUserExists(id);
-        
+
         // 作废用户的订阅和积分
         subscriptionService.invalidateUserSubscriptions(id);
         userCreditsService.invalidateUserCredits(id);
-        
+
         // 删除用户
         chromeUserMapper.deleteById(id);
     }
@@ -154,10 +154,10 @@ public class UserServiceImpl implements UserService {
         // 获取使用统计
         // 今日使用次数（所有功能类型）
         result.setTodayUsageCount(usageRecordService.getTodayUsageCount(id, null));
-        
+
         // 本月使用次数（所有功能类型）
         result.setMonthUsageCount(usageRecordService.getMonthUsageCount(id, null));
-        
+
         // 总使用次数（所有功能类型）
         result.setTotalUsageCount(usageRecordService.getTotalUsageCount(id, null));
 
@@ -176,6 +176,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isDeviceTokenExists(String deviceToken) {
         return chromeUserMapper.existsByDeviceToken(deviceToken);
+    }
+
+    @Override
+    public UserDO getUserByReferralCode(String referralCode) {
+        return chromeUserMapper.selectOne(UserDO::getReferralCode, referralCode);
     }
 
 }

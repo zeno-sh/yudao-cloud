@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.chrome.service.order;
 
 import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
+import cn.iocoder.yudao.module.chrome.service.referral.ReferralService;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,6 +94,9 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
                             .build();
                     subscriptionOrderMapper.updateById(updateOrder);
                 }
+
+                // [NEW] 触发推广奖励逻辑 (异步)
+                referralService.processPaySuccessAsync(order);
             }
         }
     }
@@ -180,4 +185,43 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         return subscriptionOrderMapper.selectPage(reqVO);
     }
 
+    @Resource
+    @Lazy
+    private ReferralService referralService;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createFreeRewardOrder(Long userId, int days, Long planId, Integer subscriptionType) {
+        log.info("[createFreeRewardOrder] 开始为用户({})赠送{}天时长, PlanId: {}, Type: {}", userId, days, planId,
+                subscriptionType);
+
+        if (planId == null || subscriptionType == null) {
+            log.warn("[createFreeRewardOrder] 参数缺失，无法赠送。PlanId: {}, Type: {}", planId, subscriptionType);
+            return;
+        }
+
+        // 1. 创建0元订单
+        SubscriptionOrderDO order = new SubscriptionOrderDO();
+        order.setOrderNo(cn.iocoder.yudao.framework.common.util.monitor.TracerUtils.getTraceId());
+        if (order.getOrderNo() == null || order.getOrderNo().isEmpty()) {
+            order.setOrderNo(java.util.UUID.randomUUID().toString().replace("-", ""));
+        }
+        order.setUserId(userId);
+        order.setPlanId(planId);
+        order.setSubscriptionType(subscriptionType);
+        order.setBillingCycle(BillingCycleEnum.ONE_TIME.getCode()); // 一次性
+        order.setOriginalPrice(java.math.BigDecimal.ZERO);
+        order.setActualPrice(java.math.BigDecimal.ZERO);
+        order.setPaymentStatus(20); // 直接已支付
+        order.setPaymentTime(LocalDateTime.now());
+        order.setPaymentMethod(30); // 其他
+
+        subscriptionOrderMapper.insert(order);
+
+        // 2. 触发订阅延期逻辑 (调用 upgradeSubscription)
+        // 使用传入的 planId 和 subscriptionType，确保与原订单一致
+        subscriptionService.upgradeSubscription(userId, subscriptionType, days, planId);
+
+        log.info("[createFreeRewardOrder] 赠送订单创建完成, OrderId: {}", order.getId());
+    }
 }

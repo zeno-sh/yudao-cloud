@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.chrome.service.order;
 
-import java.util.*;
 import javax.validation.*;
 import cn.iocoder.yudao.module.chrome.controller.admin.order.vo.*;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.order.SubscriptionOrderDO;
@@ -60,5 +59,13 @@ public interface SubscriptionOrderService {
      * @return 订单分页
      */
     PageResult<SubscriptionOrderDO> getPaidOrdersByUserId(Long userId, PageParam pageReqVO);
+
+    /**
+     * 创建免费赠送订单（奖励时长）
+     * 
+     * @param userId 用户ID
+     * @param days   赠送天数
+     */
+    void createFreeRewardOrder(Long userId, int days, Long planId, Integer subscriptionType);
 
 }

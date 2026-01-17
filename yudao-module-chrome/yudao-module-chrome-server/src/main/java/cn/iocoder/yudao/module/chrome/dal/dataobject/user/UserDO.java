@@ -57,4 +57,14 @@ public class UserDO extends BaseDO {
      */
     private String deviceToken;
 
+    /**
+     * 我的推广码
+     */
+    private String referralCode;
+
+    /**
+     * 推荐人用户ID
+     */
+    private Long referrerUserId;
+
 }
