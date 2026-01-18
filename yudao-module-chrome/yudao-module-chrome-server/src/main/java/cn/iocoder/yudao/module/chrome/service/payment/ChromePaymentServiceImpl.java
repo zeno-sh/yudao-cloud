@@ -9,8 +9,10 @@ import cn.iocoder.yudao.module.chrome.dal.dataobject.order.SubscriptionOrderDO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.plan.SubscriptionPlanDO;
 import cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO;
 import cn.iocoder.yudao.module.chrome.dal.mysql.order.SubscriptionOrderMapper;
+import cn.iocoder.yudao.module.chrome.enums.BillingCycleEnum;
 import cn.iocoder.yudao.module.chrome.enums.PaymentMethodEnum;
 import cn.iocoder.yudao.module.chrome.enums.PaymentStatusEnum;
+import cn.iocoder.yudao.module.chrome.enums.SubscriptionTypeEnum;
 import cn.iocoder.yudao.module.chrome.service.plan.SubscriptionPlanService;
 import cn.iocoder.yudao.module.chrome.service.referral.ReferralService;
 import cn.iocoder.yudao.module.chrome.service.subscription.SubscriptionService;
@@ -113,6 +115,11 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
         String orderNo = generateOrderNo(userId);
 
         // 2.1 创建订阅订单（记录原价和实际支付价格）
+        // 根据订单类型设置备注
+        String orderRemark = Boolean.TRUE.equals(upgradePriceVO.getIsRenewal()) ? "续费"
+                : (upgradePriceVO.getRemainingValue() != null &&
+                        upgradePriceVO.getRemainingValue().compareTo(java.math.BigDecimal.ZERO) > 0) ? "升级" : "首次订阅";
+
         SubscriptionOrderDO order = SubscriptionOrderDO.builder()
                 .orderNo(orderNo)
                 .userId(userId)
@@ -125,7 +132,9 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
                 .currency(plan.getCurrency())
                 .paymentMethod(PaymentMethodEnum.ALIPAY.getCode()) // 主要使用支付宝
                 .paymentStatus(PaymentStatusEnum.PENDING.getCode()) // 待支付
-                .expireTime(addTime(Duration.ofHours(2L))) // 2小时后过期
+                .expireTime(addTime(Duration.ofHours(2L))) // 2小时后过期（支付超时时间）
+                .durationDays(plan.getDurationDays()) // 套餐时长
+                .remark(orderRemark) // 订单备注
                 .build();
         subscriptionOrderMapper.insert(order);
 
@@ -340,7 +349,8 @@ public class ChromePaymentServiceImpl implements ChromePaymentService {
      * @return 订单标题
      */
     private String buildOrderSubject(SubscriptionPlanDO plan) {
-        return plan.getPlanName() + " - 积分充值";
+        return plan.getPlanName() + String.format("- %s",
+                plan.getSubscriptionType().equals(SubscriptionTypeEnum.CREDITS_PACK.getCode()) ? "积分充值" : "套餐订阅");
     }
 
     /**

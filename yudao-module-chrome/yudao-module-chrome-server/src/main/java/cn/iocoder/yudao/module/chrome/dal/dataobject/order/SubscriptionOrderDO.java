@@ -87,5 +87,13 @@ public class SubscriptionOrderDO extends BaseDO {
      * 过期时间
      */
     private LocalDateTime expireTime;
+    /**
+     * 订阅时长（天数）
+     */
+    private Integer durationDays;
+    /**
+     * 备注（如：推广赠送、首次订阅、续费等）
+     */
+    private String remark;
 
 }

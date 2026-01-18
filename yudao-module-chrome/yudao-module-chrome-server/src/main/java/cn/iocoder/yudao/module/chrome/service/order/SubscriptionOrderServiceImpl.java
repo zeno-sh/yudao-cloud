@@ -186,7 +186,7 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
             return;
         }
 
-        // 1. 创建0元订单
+        // 1. 创建0元赠送订单
         SubscriptionOrderDO order = new SubscriptionOrderDO();
         order.setOrderNo(cn.iocoder.yudao.framework.common.util.monitor.TracerUtils.getTraceId());
         if (order.getOrderNo() == null || order.getOrderNo().isEmpty()) {
@@ -202,13 +202,26 @@ public class SubscriptionOrderServiceImpl implements SubscriptionOrderService {
         order.setPaymentTime(LocalDateTime.now());
         order.setPaymentMethod(30); // 其他
         order.setCredits(0);
+        order.setDurationDays(days); // 记录赠送时长
+        order.setRemark("推广赠送"); // 备注
 
         subscriptionOrderMapper.insert(order);
 
         // 2. 触发订阅延期逻辑 (调用 upgradeSubscription)
-        // 使用传入的 planId 和 subscriptionType，确保与原订单一致
-        subscriptionService.upgradeSubscription(userId, subscriptionType, days, planId);
+        Long subscriptionId = subscriptionService.upgradeSubscription(userId, subscriptionType, days, planId);
 
-        log.info("[createFreeRewardOrder] 赠送订单创建完成, OrderId: {}", order.getId());
+        // 3. 更新订单的过期时间（与订阅保持一致）
+        cn.iocoder.yudao.module.chrome.dal.dataobject.subscription.SubscriptionDO subscription = subscriptionService
+                .getSubscription(subscriptionId);
+        if (subscription != null) {
+            SubscriptionOrderDO updateOrder = SubscriptionOrderDO.builder()
+                    .id(order.getId())
+                    .expireTime(subscription.getEndTime())
+                    .build();
+            subscriptionOrderMapper.updateById(updateOrder);
+        }
+
+        log.info("[createFreeRewardOrder] 赠送订单创建完成, OrderId: {}, ExpireTime: {}",
+                order.getId(), subscription != null ? subscription.getEndTime() : "未设置");
     }
 }

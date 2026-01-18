@@ -35,4 +35,10 @@ public class UserRechargeRecordRespVO {
 
     @Schema(description = "计费周期", example = "1")
     private Integer billingCycle;
+
+    @Schema(description = "订阅时长（天数）", example = "30")
+    private Integer durationDays;
+
+    @Schema(description = "备注（如：推广赠送、首次订阅、续费等）", example = "推广赠送")
+    private String remark;
 }
